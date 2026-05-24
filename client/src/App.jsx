@@ -1,9 +1,10 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 
 const moods = [
   {
     id: 'cemas',
     label: 'Cemas',
+    emoji: '😟',
     tone: 'Tubuh siaga, pikiran berlari',
     need: 'Rasa aman',
     practice: 'Tarik napas 4 detik, buang 6 detik. Ulangi 6 putaran sambil menaruh satu tangan di dada.',
@@ -19,6 +20,7 @@ const moods = [
   {
     id: 'sedih',
     label: 'Sedih',
+    emoji: '😢',
     tone: 'Energi turun, hati terasa berat',
     need: 'Diterima',
     practice: 'Sebutkan perasaanmu dengan kalimat sederhana: "Aku sedang sedih karena ...". Jangan diperindah, cukup jujur.',
@@ -34,6 +36,7 @@ const moods = [
   {
     id: 'malu',
     label: 'Malu',
+    emoji: '😳',
     tone: 'Ingin menghilang atau menutup diri',
     need: 'Self-compassion',
     practice: 'Tulis satu kalimat yang akan kamu ucapkan ke teman baik jika ia mengalami hal yang sama.',
@@ -49,6 +52,7 @@ const moods = [
   {
     id: 'validasi',
     label: 'Butuh validasi',
+    emoji: '🥺',
     tone: 'Nilai diri terasa bergantung pada respons orang',
     need: 'Kembali ke diri',
     practice: 'Pilih satu nilai yang kamu mau hidupi hari ini, lalu lakukan satu tindakan kecil untuk nilai itu tanpa menunggu dilihat.',
@@ -65,6 +69,7 @@ const moods = [
   {
     id: 'marah',
     label: 'Marah',
+    emoji: '😠',
     tone: 'Ada batas yang terasa dilanggar',
     need: 'Batas yang jelas',
     practice: 'Tunda respons 90 detik. Catat: "Aku marah karena ...", lalu ubah menjadi permintaan yang spesifik.',
@@ -120,15 +125,78 @@ const sources = [
   },
 ];
 
+function getOffset(index, selectedIndex, total) {
+  const rawOffset = index - selectedIndex;
+  const wrappedOffset =
+    Math.abs(rawOffset) > total / 2
+      ? rawOffset - Math.sign(rawOffset) * total
+      : rawOffset;
+
+  return wrappedOffset;
+}
+
+function getOrbitStyle(offset) {
+  const orbitMap = {
+    '-2': { x: -76, y: 104, scale: 0.84, opacity: 0.64, z: 1 },
+    '-1': { x: -108, y: -20, scale: 0.94, opacity: 0.84, z: 2 },
+    0: { x: 0, y: -132, scale: 1.08, opacity: 1, z: 4 },
+    1: { x: 108, y: -20, scale: 0.94, opacity: 0.84, z: 2 },
+    2: { x: 76, y: 104, scale: 0.84, opacity: 0.64, z: 1 },
+  };
+  const orbit = orbitMap[offset] ?? orbitMap[0];
+
+  return {
+    '--x': `${orbit.x}px`,
+    '--y': `${orbit.y}px`,
+    '--scale': orbit.scale,
+    '--opacity': orbit.opacity,
+    '--z': orbit.z,
+  };
+}
+
 export default function App() {
   const [selectedMood, setSelectedMood] = useState(moods[0].id);
+  const [isRevealed, setIsRevealed] = useState(false);
+  const guidanceRef = useRef(null);
+  const selectedIndex = moods.findIndex((item) => item.id === selectedMood);
   const mood = useMemo(
     () => moods.find((item) => item.id === selectedMood) ?? moods[0],
     [selectedMood],
   );
 
+  const selectMoodByIndex = (nextIndex) => {
+    const safeIndex = (nextIndex + moods.length) % moods.length;
+    setSelectedMood(moods[safeIndex].id);
+    setIsRevealed(false);
+  };
+
+  const goPrevious = () => selectMoodByIndex(selectedIndex - 1);
+  const goNext = () => selectMoodByIndex(selectedIndex + 1);
+  const revealGuidance = () => {
+    setIsRevealed(true);
+    window.setTimeout(() => {
+      guidanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 420);
+  };
+
+  useEffect(() => {
+    if (isRevealed) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setSelectedMood((currentMood) => {
+        const currentIndex = moods.findIndex((item) => item.id === currentMood);
+        const nextIndex = (currentIndex + 1) % moods.length;
+        return moods[nextIndex].id;
+      });
+    }, 3200);
+
+    return () => window.clearInterval(timer);
+  }, [isRevealed]);
+
   return (
-    <main className="app-shell">
+    <main className={isRevealed ? 'app-shell is-revealed' : 'app-shell'}>
       <section className="today-panel" aria-labelledby="dashboard-title">
         <div className="title-block">
           <p className="eyebrow">Tumbuh hari ini</p>
@@ -140,22 +208,80 @@ export default function App() {
           </p>
         </div>
 
-        <div className="mood-picker" aria-label="Pilihan perasaan">
-          {moods.map((item) => (
+        <div className="mood-stage" aria-label="Pilihan perasaan">
+          <div className="character-wrap" aria-hidden="true">
+            <div className="character">
+              <span className="character-face">
+                <span className="eye left-eye" />
+                <span className="eye right-eye" />
+                <span className="smile" />
+              </span>
+              <span className="character-body" />
+            </div>
+          </div>
+
+          <div className="mood-orbit">
+            {moods.map((item, index) => {
+              const offset = getOffset(index, selectedIndex, moods.length);
+
+              return (
+                <button
+                  aria-label={`Pilih perasaan ${item.label}`}
+                  className={item.id === selectedMood ? 'orbit-mood is-active' : 'orbit-mood'}
+                  key={item.id}
+                  onClick={() => {
+                    setSelectedMood(item.id);
+                    setIsRevealed(false);
+                  }}
+                  style={getOrbitStyle(offset)}
+                  type="button"
+                >
+                  <span className="mood-emoji">{item.emoji}</span>
+                  <span>{item.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          <div className="stage-controls">
             <button
-              className={item.id === selectedMood ? 'mood-chip is-active' : 'mood-chip'}
-              key={item.id}
-              onClick={() => setSelectedMood(item.id)}
+              aria-label="Pilih perasaan sebelumnya"
+              className="arrow-button"
+              onClick={goPrevious}
               type="button"
             >
-              <span>{item.label}</span>
-              <small>{item.need}</small>
+              ‹
             </button>
-          ))}
+            <div className="selected-mood">
+              <span>{mood.emoji}</span>
+              <strong>{mood.label}</strong>
+              <small>{mood.need}</small>
+            </div>
+            <button
+              aria-label="Pilih perasaan berikutnya"
+              className="arrow-button"
+              onClick={goNext}
+              type="button"
+            >
+              ›
+            </button>
+          </div>
+
+          <button
+            className="feeling-button"
+            onClick={revealGuidance}
+            type="button"
+          >
+            Aku sedang merasakan {mood.label.toLowerCase()}
+          </button>
         </div>
       </section>
 
-      <section className="reflection-grid" aria-label={`Panduan untuk rasa ${mood.label}`}>
+      <section
+        className="reflection-grid"
+        aria-label={`Panduan untuk rasa ${mood.label}`}
+        ref={guidanceRef}
+      >
         <article className="focus-card">
           <div>
             <p className="eyebrow">Saat ini</p>
