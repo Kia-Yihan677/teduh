@@ -102,6 +102,51 @@ const tools = [
   },
 ];
 
+const pivotSteps = [
+  {
+    title: 'Capture',
+    subtitle: 'Ambil faktanya',
+    text: 'Tulis apa yang benar-benar terjadi, bukan cerita paling keras yang muncul di kepala.',
+    prompt: 'Apa faktanya, dan apa interpretasiku?',
+  },
+  {
+    title: 'Adjust',
+    subtitle: 'Pilih perbaikan kecil',
+    text: 'Ubah pelajaran menjadi satu tindakan yang bisa dilakukan di meeting, chat, atau pekerjaan berikutnya.',
+    prompt: 'Satu hal apa yang akan kubuat lebih jelas besok?',
+  },
+  {
+    title: 'Move',
+    subtitle: 'Lanjut tanpa menghukum diri',
+    text: 'Setelah pelajaran diambil, berhenti mengulang adegan yang sama. Kamu boleh lanjut sambil tetap belajar.',
+    prompt: 'Apa langkah berikutnya yang paling ringan?',
+  },
+];
+
+const workSituations = [
+  {
+    event: 'Meeting terasa buruk',
+    reframe: 'Satu meeting bukan identitas profesionalmu.',
+    action: 'Catat 3 poin utama untuk follow-up.',
+  },
+  {
+    event: 'Kritik dari atasan',
+    reframe: 'Kritik adalah data, bukan vonis nilai diri.',
+    action: 'Minta contoh output yang dianggap jelas.',
+  },
+  {
+    event: 'Kepikiran omongan orang',
+    reframe: 'Tidak semua komentar perlu menjadi pusat harimu.',
+    action: 'Tentukan apakah ada pelajaran, batas, atau cukup dilepas.',
+  },
+];
+
+const navigationSignals = [
+  'Ada orang yang direct, defensif, suportif, atau suka melempar tanggung jawab.',
+  'Tugasmu bukan membuat semua orang menyenangkan, tapi membaca pola dan menyesuaikan cara komunikasi.',
+  'Adaptasi profesional bukan berarti palsu. Itu cara menjaga energi sambil tetap bergerak.',
+];
+
 const sources = [
   {
     label: 'Lieberman et al., Psychological Science, 2007',
@@ -327,6 +372,62 @@ export default function App() {
               <p>{tool.text}</p>
             </article>
           ))}
+        </div>
+      </section>
+
+      <section className="work-pivot-section" aria-labelledby="pivot-title">
+        <div className="pivot-intro">
+          <p className="eyebrow">Dunia kerja</p>
+          <h2 id="pivot-title">Pivot cepat setelah hari yang berat</h2>
+          <p>
+            Skill pentingnya bukan tidak pernah sakit hati, salah bicara, atau
+            pulang dengan kepala penuh. Skill-nya adalah tidak tinggal terlalu
+            lama di satu kejadian. Ambil pelajaran, atur ulang respons, lalu
+            kembali bergerak tanpa menjadikan momen itu sebagai identitas.
+          </p>
+        </div>
+
+        <div className="pivot-flow" aria-label="Langkah Capture Adjust Move">
+          {pivotSteps.map((step, index) => (
+            <article className="pivot-step" key={step.title}>
+              <span>{String(index + 1).padStart(2, '0')}</span>
+              <h3>{step.title}</h3>
+              <strong>{step.subtitle}</strong>
+              <p>{step.text}</p>
+              <em>{step.prompt}</em>
+            </article>
+          ))}
+        </div>
+
+        <div className="work-grid">
+          <article className="reset-card">
+            <p className="eyebrow">Reset 20 menit</p>
+            <h3>Batasi replay di kepala</h3>
+            <p>
+              Beri otak slot untuk memproses, lalu tutup dengan keputusan kecil.
+              Kalau pikiran kembali memutar ulang percakapan, ingatkan diri:
+              "Sudah diproses. Sekarang lanjut."
+            </p>
+            <div className="reset-table">
+              {workSituations.map((item) => (
+                <div className="reset-row" key={item.event}>
+                  <span>{item.event}</span>
+                  <p>{item.reframe}</p>
+                  <strong>{item.action}</strong>
+                </div>
+              ))}
+            </div>
+          </article>
+
+          <article className="navigation-card">
+            <p className="eyebrow">Social awareness</p>
+            <h3>Belajar orang apa adanya</h3>
+            <ul>
+              {navigationSignals.map((signal) => (
+                <li key={signal}>{signal}</li>
+              ))}
+            </ul>
+          </article>
         </div>
       </section>
 
