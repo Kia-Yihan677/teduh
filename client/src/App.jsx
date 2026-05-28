@@ -257,6 +257,7 @@ export default function App() {
   const [aiReflection, setAiReflection] = useState(null);
   const [aiError, setAiError] = useState('');
   const [isAiLoading, setIsAiLoading] = useState(false);
+  const [isScienceOpen, setIsScienceOpen] = useState(false);
   const guidanceRef = useRef(null);
   const selectedIndex = moods.findIndex((item) => item.id === selectedMood);
   const mood = useMemo(
@@ -281,10 +282,12 @@ export default function App() {
   const goNext = () => selectMoodByIndex(selectedIndex + 1);
   const goToAffirmationPage = () => {
     setCurrentPage('affirmation');
+    setIsScienceOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const goToHomePage = () => {
     setCurrentPage('home');
+    setIsScienceOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
   const revealGuidance = () => {
@@ -352,6 +355,21 @@ export default function App() {
     return () => window.clearInterval(timer);
   }, [currentPage, isRevealed]);
 
+  useEffect(() => {
+    if (!isScienceOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsScienceOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isScienceOpen]);
+
   if (currentPage === 'affirmation') {
     return (
       <main className="app-shell affirmation-page">
@@ -395,6 +413,13 @@ export default function App() {
               </span>
               <span className="mirror-person-body" />
             </div>
+            <button
+              className="science-popup-button mirror-question-button"
+              onClick={() => setIsScienceOpen(true)}
+              type="button"
+            >
+              Kenapa afirmasi itu penting?
+            </button>
             <span className="mirror-heart" aria-hidden="true">♡</span>
           </div>
         </section>
@@ -435,18 +460,53 @@ export default function App() {
               </div>
               <em>{dailyAffirmation.repeat}</em>
             </article>
-
-            <div className="daily-science-grid">
-              {dailyAffirmation.science.map((item) => (
-                <article className="daily-science-card" key={item.title}>
-                  <span>{item.source}</span>
-                  <h3>{item.title}</h3>
-                  <p>{item.text}</p>
-                </article>
-              ))}
-            </div>
           </div>
         </section>
+
+        {isScienceOpen ? (
+          <div
+            aria-labelledby="science-popup-title"
+            aria-modal="true"
+            className="science-popup-backdrop"
+            role="dialog"
+          >
+            <button
+              aria-label="Tutup penjelasan afirmasi"
+              className="science-popup-scrim"
+              onClick={() => setIsScienceOpen(false)}
+              type="button"
+            />
+            <section className="science-popup">
+              <div className="science-popup-header">
+                <div>
+                  <p className="eyebrow">Dasar ilmiah</p>
+                  <h2 id="science-popup-title">Kenapa afirmasi itu penting?</h2>
+                </div>
+                <button
+                  aria-label="Tutup pop up"
+                  className="science-popup-close"
+                  onClick={() => setIsScienceOpen(false)}
+                  type="button"
+                >
+                  ×
+                </button>
+              </div>
+              <p className="science-popup-intro">
+                Dampaknya paling masuk akal saat afirmasi diulang dengan pelan,
+                terasa realistis, dan dihubungkan dengan tindakan kecil.
+              </p>
+              <div className="daily-science-grid">
+                {dailyAffirmation.science.map((item) => (
+                  <article className="daily-science-card" key={item.title}>
+                    <span>{item.source}</span>
+                    <h3>{item.title}</h3>
+                    <p>{item.text}</p>
+                  </article>
+                ))}
+              </div>
+            </section>
+          </div>
+        ) : null}
 
         <section className="sources-strip" aria-label="Referensi ilmiah">
           <span>Referensi awal</span>
