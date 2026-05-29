@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import pixelCharacter from './assets/pixel-character-idle.webp';
 import pixelCharacterTalking from './assets/pixel-character-talking.webp';
+import pixelCharacterWind from './assets/pixel-character-wind.webp';
 
 const moods = [
   {
@@ -83,6 +84,22 @@ const moods = [
     ],
     evidence: 'Memberi nama emosi dan melakukan reappraisal melibatkan area prefrontal yang membantu regulasi respons emosional.',
     source: 'Torre & Lieberman, 2018',
+  },
+  {
+    id: 'bahagia',
+    label: 'Bahagia',
+    emoji: '😊',
+    tone: 'Ada rasa ringan, hangat, atau lega yang ingin dirayakan',
+    need: 'Diizinkan menikmati',
+    practice: 'Savoring 30 detik: diam sebentar, cari sensasi paling enak di tubuh, sebutkan 3 detail dari momen ini, lalu bisikkan, "Aku boleh aman saat merasa bahagia."',
+    prompt: 'Kalau bagian diriku takut bahagia karena nanti ada yang buruk, bukti apa yang menunjukkan momen ini tetap boleh dinikmati sekarang?',
+    affirmation: [
+      'Aku pantas mendapatkan kebahagiaan yang sehat.',
+      'Aku boleh menikmati hal baik tanpa harus langsung membayar dengan rasa takut.',
+      'Bahagia hari ini tidak berarti aku lengah. Aku tetap bisa hadir dan bijak.',
+    ],
+    evidence: 'Emosi positif dapat memperluas perhatian dan pilihan respons, lalu membantu membangun sumber daya psikologis seperti resiliensi. Fear of happiness juga dikenal sebagai keyakinan bahwa rasa bahagia bisa membawa konsekuensi buruk, sehingga latihan savoring membantu menikmati emosi positif secara bertahap.',
+    source: 'Fredrickson, 2001; Joshanloo & Weijers, 2014',
   },
 ];
 
@@ -221,6 +238,26 @@ const sources = [
     label: 'Dutcher et al., Social Cognitive and Affective Neuroscience, 2020',
     href: 'https://academic.oup.com/scan/article/15/10/1086/5815969',
   },
+  {
+    label: 'Fredrickson, American Psychologist, 2001',
+    href: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC3122271/',
+  },
+  {
+    label: 'Joshanloo & Weijers, Journal of Happiness Studies, 2014',
+    href: 'https://link.springer.com/article/10.1007/s10902-013-9489-9',
+  },
+  {
+    label: 'Najib & Kumalasari, Jurnal Ilmiah Psikologi Terapan, 2023',
+    href: 'https://ejournal.umm.ac.id/index.php/jipt/article/view/26151',
+  },
+  {
+    label: 'Miyamoto & Ma, Emotion, 2011',
+    href: 'https://pubmed.ncbi.nlm.nih.gov/21910543/',
+  },
+  {
+    label: 'SkillJoy RCT, Journal of Consulting and Clinical Psychology, 2022',
+    href: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC10580378/',
+  },
 ];
 
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
@@ -239,11 +276,13 @@ function getOffset(index, selectedIndex, total) {
 
 function getOrbitStyle(offset) {
   const orbitMap = {
-    '-2': { x: -76, y: 104, scale: 0.84, opacity: 0.64, z: 1 },
+    '-3': { x: 0, y: 128, scale: 0.78, opacity: 0.5, z: 1 },
+    '-2': { x: -98, y: 92, scale: 0.84, opacity: 0.64, z: 1 },
     '-1': { x: -108, y: -20, scale: 0.94, opacity: 0.84, z: 2 },
     0: { x: 0, y: -132, scale: 1.08, opacity: 1, z: 4 },
     1: { x: 108, y: -20, scale: 0.94, opacity: 0.84, z: 2 },
-    2: { x: 76, y: 104, scale: 0.84, opacity: 0.64, z: 1 },
+    2: { x: 98, y: 92, scale: 0.84, opacity: 0.64, z: 1 },
+    3: { x: 0, y: 128, scale: 0.78, opacity: 0.5, z: 1 },
   };
   const orbit = orbitMap[offset] ?? orbitMap[0];
 
@@ -253,6 +292,77 @@ function getOrbitStyle(offset) {
     '--scale': orbit.scale,
     '--opacity': orbit.opacity,
     '--z': orbit.z,
+  };
+}
+
+function getConceptOrbitStyle(offset) {
+  const orbitMap = {
+    '-3': {
+      x: '0px',
+      y: 'clamp(178px, 23vw, 206px)',
+      scale: 0.64,
+      opacity: 0.46,
+      z: 1,
+      blur: 1.8,
+    },
+    '-2': {
+      x: 'clamp(-214px, -28vw, -96px)',
+      y: 'clamp(-12px, -1vw, -4px)',
+      scale: 0.72,
+      opacity: 0.52,
+      z: 2,
+      blur: 1.4,
+    },
+    '-1': {
+      x: 'clamp(-132px, -17vw, -78px)',
+      y: 'clamp(-108px, -14vw, -64px)',
+      scale: 0.86,
+      opacity: 0.74,
+      z: 3,
+      blur: 0.4,
+    },
+    0: {
+      x: '0px',
+      y: 'clamp(96px, 16vw, 126px)',
+      scale: 1.32,
+      opacity: 1,
+      z: 8,
+      blur: 0,
+    },
+    1: {
+      x: 'clamp(78px, 17vw, 132px)',
+      y: 'clamp(-108px, -14vw, -64px)',
+      scale: 0.86,
+      opacity: 0.74,
+      z: 3,
+      blur: 0.4,
+    },
+    2: {
+      x: 'clamp(96px, 28vw, 214px)',
+      y: 'clamp(-12px, -1vw, -4px)',
+      scale: 0.72,
+      opacity: 0.52,
+      z: 2,
+      blur: 1.4,
+    },
+    3: {
+      x: '0px',
+      y: 'clamp(178px, 23vw, 206px)',
+      scale: 0.64,
+      opacity: 0.46,
+      z: 1,
+      blur: 1.8,
+    },
+  };
+  const orbit = orbitMap[offset] ?? orbitMap[0];
+
+  return {
+    '--x': orbit.x,
+    '--y': orbit.y,
+    '--scale': orbit.scale,
+    '--opacity': orbit.opacity,
+    '--z': orbit.z,
+    '--blur': `${orbit.blur}px`,
   };
 }
 
@@ -274,10 +384,12 @@ export default function App() {
   const [isGreetingVisible, setIsGreetingVisible] = useState(false);
   const [isCharacterTalking, setIsCharacterTalking] = useState(false);
   const [greetingWordCount, setGreetingWordCount] = useState(0);
+  const [isWindActive, setIsWindActive] = useState(false);
   const audioRef = useRef(null);
   const isAudioMutedRef = useRef(false);
   const guidanceRef = useRef(null);
   const scienceTouchStartX = useRef(null);
+  const isDashboardPage = currentPage === 'home' || currentPage === 'dashboard-copy';
   const selectedIndex = moods.findIndex((item) => item.id === selectedMood);
   const mood = useMemo(
     () => moods.find((item) => item.id === selectedMood) ?? moods[0],
@@ -291,7 +403,11 @@ export default function App() {
     [selectedAffirmationCondition],
   );
   const typedGreeting = characterGreetingWords.slice(0, greetingWordCount).join(' ');
-  const characterImage = isCharacterTalking ? pixelCharacterTalking : pixelCharacter;
+  const characterImage = isCharacterTalking
+    ? pixelCharacterTalking
+    : isWindActive
+      ? pixelCharacterWind
+      : pixelCharacter;
   const selectedScience =
     dailyAffirmation.science[selectedScienceIndex] ?? dailyAffirmation.science[0];
 
@@ -343,6 +459,11 @@ export default function App() {
   };
   const goToAffirmationPage = () => {
     setCurrentPage('affirmation');
+    setIsScienceOpen(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+  const goToDashboardCopyPage = () => {
+    setCurrentPage('dashboard-copy');
     setIsScienceOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -438,7 +559,7 @@ export default function App() {
   };
 
   useEffect(() => {
-    if (currentPage !== 'home' || isRevealed) {
+    if (!isDashboardPage || isRevealed) {
       return undefined;
     }
 
@@ -451,10 +572,10 @@ export default function App() {
     }, 3200);
 
     return () => window.clearInterval(timer);
-  }, [currentPage, isRevealed]);
+  }, [isDashboardPage, isRevealed]);
 
   useEffect(() => {
-    if (currentPage !== 'home') {
+    if (!isDashboardPage) {
       setIsGreetingVisible(false);
       setIsCharacterTalking(false);
       setGreetingWordCount(0);
@@ -502,7 +623,45 @@ export default function App() {
       window.clearInterval(interval);
       timers.forEach((timer) => window.clearTimeout(timer));
     };
-  }, [currentPage]);
+  }, [isDashboardPage]);
+
+  useEffect(() => {
+    if (!isDashboardPage) {
+      setIsWindActive(false);
+      return undefined;
+    }
+
+    let gustTimer;
+    let calmTimer;
+
+    const scheduleGust = () => {
+      const delay = 14000 + Math.random() * 10000;
+
+      gustTimer = window.setTimeout(() => {
+        setIsWindActive(true);
+
+        calmTimer = window.setTimeout(() => {
+          setIsWindActive(false);
+          scheduleGust();
+        }, 3200);
+      }, delay);
+    };
+
+    const firstGust = window.setTimeout(() => {
+      setIsWindActive(true);
+
+      calmTimer = window.setTimeout(() => {
+        setIsWindActive(false);
+        scheduleGust();
+      }, 3000);
+    }, 6500);
+
+    return () => {
+      window.clearTimeout(firstGust);
+      window.clearTimeout(gustTimer);
+      window.clearTimeout(calmTimer);
+    };
+  }, [isDashboardPage]);
 
   useEffect(() => {
     if (!isScienceOpen) {
@@ -589,6 +748,74 @@ export default function App() {
     </>
   );
 
+  if (currentPage === 'dashboard-copy') {
+    return (
+      <main className="app-shell dashboard-concept-shell">
+        {audioControl}
+
+        <button
+          aria-label="Kembali ke halaman afirmasi"
+          className="page-nav-button previous-page-button"
+          onClick={goToAffirmationPage}
+          title="Afirmasi Hari Ini"
+          type="button"
+        >
+          ‹
+        </button>
+
+        <section className="emotion-orbit-concept" aria-labelledby="dashboard-copy-title">
+          <div className="concept-title-block">
+            <p className="eyebrow">Dashboard versi baru</p>
+            <h1 id="dashboard-copy-title">apa yg sedang kamu rasakan?</h1>
+          </div>
+
+          <div className="concept-orbit-stage" aria-label="Orbit pilihan emosi">
+            <div className="concept-ring concept-ring-back" aria-hidden="true" />
+            <div className="concept-ring concept-ring-front" aria-hidden="true" />
+            <div className="concept-core" aria-hidden="true">
+              <span />
+            </div>
+
+            <div className="concept-mood-orbit">
+              {moods.map((item, index) => {
+                const offset = getOffset(index, selectedIndex, moods.length);
+
+                return (
+                  <button
+                    aria-label={`Pilih perasaan ${item.label}`}
+                    className={
+                      item.id === selectedMood
+                        ? 'concept-mood-button is-active'
+                        : 'concept-mood-button'
+                    }
+                    key={item.id}
+                    onClick={() => {
+                      setSelectedMood(item.id);
+                      setIsRevealed(false);
+                    }}
+                    style={getConceptOrbitStyle(offset)}
+                    type="button"
+                  >
+                    <span className="concept-mood-emoji">{item.emoji}</span>
+                    <strong>{item.label}</strong>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="concept-selected-panel">
+            <span>{mood.emoji}</span>
+            <div>
+              <p>Yang terasa paling depan</p>
+              <strong>{mood.label}</strong>
+            </div>
+          </div>
+        </section>
+      </main>
+    );
+  }
+
   if (currentPage === 'affirmation') {
     return (
       <main className="app-shell affirmation-page">
@@ -602,6 +829,16 @@ export default function App() {
           type="button"
         >
           ‹
+        </button>
+
+        <button
+          aria-label="Buka dashboard versi baru"
+          className="page-nav-button next-page-button"
+          onClick={goToDashboardCopyPage}
+          title="Dashboard versi baru"
+          type="button"
+        >
+          ›
         </button>
 
         <section className="affirmation-hero" aria-labelledby="affirmation-page-title">
@@ -787,15 +1024,27 @@ export default function App() {
     <main className={isRevealed ? 'app-shell is-revealed' : 'app-shell'}>
       {audioControl}
 
-      <button
-        aria-label="Buka halaman afirmasi"
-        className="page-nav-button next-page-button"
-        onClick={goToAffirmationPage}
-        title="Afirmasi Hari Ini"
-        type="button"
-      >
-        ›
-      </button>
+      {currentPage === 'home' ? (
+        <button
+          aria-label="Buka halaman afirmasi"
+          className="page-nav-button next-page-button"
+          onClick={goToAffirmationPage}
+          title="Afirmasi Hari Ini"
+          type="button"
+        >
+          ›
+        </button>
+      ) : (
+        <button
+          aria-label="Kembali ke halaman afirmasi"
+          className="page-nav-button previous-page-button"
+          onClick={goToAffirmationPage}
+          title="Afirmasi Hari Ini"
+          type="button"
+        >
+          ‹
+        </button>
+      )}
 
       <section className="today-panel" aria-labelledby="dashboard-title">
         <div className="title-block">
@@ -809,10 +1058,19 @@ export default function App() {
         </div>
 
         <div className="mood-stage" aria-label="Pilihan perasaan">
-          <div className="character-wrap">
+          <div className={isWindActive ? 'character-wrap is-windy' : 'character-wrap'}>
             {isGreetingVisible ? (
               <p className="character-speech">{typedGreeting}</p>
             ) : null}
+            <div className="wind-layer" aria-hidden="true">
+              <span className="wind-streak wind-streak-one" />
+              <span className="wind-streak wind-streak-two" />
+              <span className="wind-streak wind-streak-three" />
+              <span className="wind-leaf wind-leaf-one" />
+              <span className="wind-leaf wind-leaf-two" />
+              <span className="wind-leaf wind-leaf-three" />
+              <span className="wind-leaf wind-leaf-four" />
+            </div>
             <div className="character">
               <img alt="" className="pixel-character" src={characterImage} />
             </div>
