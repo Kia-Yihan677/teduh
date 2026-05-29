@@ -1,4 +1,6 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import pixelCharacter from './assets/pixel-character-idle.webp';
+import pixelCharacterTalking from './assets/pixel-character-talking.webp';
 
 const moods = [
   {
@@ -138,6 +140,9 @@ const dailyAffirmationConditions = [
   },
 ];
 
+const characterGreeting = 'Halo, gimana perasaan mu hari ini?';
+const characterGreetingWords = characterGreeting.split(' ');
+
 const pivotSteps = [
   {
     title: 'Capture',
@@ -266,6 +271,9 @@ export default function App() {
   const [selectedScienceIndex, setSelectedScienceIndex] = useState(0);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [hasAudioStarted, setHasAudioStarted] = useState(false);
+  const [isGreetingVisible, setIsGreetingVisible] = useState(false);
+  const [isCharacterTalking, setIsCharacterTalking] = useState(false);
+  const [greetingWordCount, setGreetingWordCount] = useState(0);
   const audioRef = useRef(null);
   const isAudioMutedRef = useRef(false);
   const guidanceRef = useRef(null);
@@ -282,6 +290,8 @@ export default function App() {
       ) ?? dailyAffirmationConditions[0],
     [selectedAffirmationCondition],
   );
+  const typedGreeting = characterGreetingWords.slice(0, greetingWordCount).join(' ');
+  const characterImage = isCharacterTalking ? pixelCharacterTalking : pixelCharacter;
   const selectedScience =
     dailyAffirmation.science[selectedScienceIndex] ?? dailyAffirmation.science[0];
 
@@ -347,9 +357,42 @@ export default function App() {
       guidanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 420);
   };
+  const tryPlayAudio = useCallback(async () => {
+    const audio = audioRef.current;
+
+    if (!audio || isAudioMutedRef.current) {
+      return;
+    }
+
+    audio.muted = false;
+
+    try {
+      await audio.play();
+      setHasAudioStarted(true);
+    } catch {
+      setHasAudioStarted(false);
+    }
+  }, []);
+
   const toggleAudio = () => {
-    setHasAudioStarted(true);
-    setIsAudioMuted((currentValue) => !currentValue);
+    const audio = audioRef.current;
+
+    setIsAudioMuted((currentValue) => {
+      const nextValue = !currentValue;
+      isAudioMutedRef.current = nextValue;
+
+      if (audio) {
+        audio.muted = nextValue;
+
+        if (nextValue) {
+          audio.pause();
+        } else {
+          window.setTimeout(tryPlayAudio, 0);
+        }
+      }
+
+      return nextValue;
+    });
   };
 
   const requestAiReflection = async (event) => {
@@ -411,6 +454,57 @@ export default function App() {
   }, [currentPage, isRevealed]);
 
   useEffect(() => {
+    if (currentPage !== 'home') {
+      setIsGreetingVisible(false);
+      setIsCharacterTalking(false);
+      setGreetingWordCount(0);
+      return undefined;
+    }
+
+    const timers = [];
+
+    const showGreeting = () => {
+      setIsGreetingVisible(true);
+      setIsCharacterTalking(true);
+      setGreetingWordCount(1);
+
+      characterGreetingWords.forEach((_, index) => {
+        if (index === 0) {
+          return;
+        }
+
+        timers.push(
+          window.setTimeout(() => {
+            setGreetingWordCount(index + 1);
+          }, 420 * index),
+        );
+      });
+
+      timers.push(
+        window.setTimeout(() => {
+          setIsCharacterTalking(false);
+        }, 420 * (characterGreetingWords.length - 1) + 1100),
+      );
+
+      timers.push(
+        window.setTimeout(() => {
+          setIsGreetingVisible(false);
+          setGreetingWordCount(0);
+        }, 420 * (characterGreetingWords.length - 1) + 2600),
+      );
+    };
+
+    const firstTimer = window.setTimeout(showGreeting, 900);
+    const interval = window.setInterval(showGreeting, 11000);
+
+    return () => {
+      window.clearTimeout(firstTimer);
+      window.clearInterval(interval);
+      timers.forEach((timer) => window.clearTimeout(timer));
+    };
+  }, [currentPage]);
+
+  useEffect(() => {
     if (!isScienceOpen) {
       return undefined;
     }
@@ -434,7 +528,9 @@ export default function App() {
 
     audio.loop = true;
     audio.volume = 0.34;
-  }, []);
+    audio.muted = isAudioMutedRef.current;
+    tryPlayAudio();
+  }, [tryPlayAudio]);
 
   useEffect(() => {
     isAudioMutedRef.current = isAudioMuted;
@@ -443,7 +539,7 @@ export default function App() {
   useEffect(() => {
     const startAudioAfterInteraction = () => {
       if (!isAudioMutedRef.current) {
-        setHasAudioStarted(true);
+        tryPlayAudio();
       }
     };
 
@@ -454,7 +550,7 @@ export default function App() {
       window.removeEventListener('keydown', startAudioAfterInteraction);
       window.removeEventListener('pointerdown', startAudioAfterInteraction);
     };
-  }, []);
+  }, [tryPlayAudio]);
 
   useEffect(() => {
     const audio = audioRef.current;
@@ -474,12 +570,12 @@ export default function App() {
       return;
     }
 
-    audio.play().catch(() => {});
-  }, [hasAudioStarted, isAudioMuted]);
+    tryPlayAudio();
+  }, [hasAudioStarted, isAudioMuted, tryPlayAudio]);
 
   const audioControl = (
     <>
-      <audio ref={audioRef} preload="auto" src={BACKGROUND_MUSIC_URL} />
+      <audio autoPlay playsInline ref={audioRef} preload="auto" src={BACKGROUND_MUSIC_URL} />
       <button
         aria-label={isAudioMuted ? 'Nyalakan musik' : 'Matikan musik'}
         aria-pressed={isAudioMuted}
@@ -713,14 +809,12 @@ export default function App() {
         </div>
 
         <div className="mood-stage" aria-label="Pilihan perasaan">
-          <div className="character-wrap" aria-hidden="true">
+          <div className="character-wrap">
+            {isGreetingVisible ? (
+              <p className="character-speech">{typedGreeting}</p>
+            ) : null}
             <div className="character">
-              <span className="character-face">
-                <span className="eye left-eye" />
-                <span className="eye right-eye" />
-                <span className="smile" />
-              </span>
-              <span className="character-body" />
+              <img alt="" className="pixel-character" src={characterImage} />
             </div>
           </div>
 
