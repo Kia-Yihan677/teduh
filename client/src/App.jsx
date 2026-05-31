@@ -264,6 +264,30 @@ const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 const BACKGROUND_MUSIC_URL =
   import.meta.env.VITE_BACKGROUND_MUSIC_URL ?? '/BABIMBUM-soundtrack1.mp3';
 
+const regulationPhases = [
+  {
+    id: 'breathe-in',
+    label: 'Tarik napas',
+    display: 'Breathe in',
+    hint: 'Biarkan dada dan perut mengembang pelan.',
+  },
+  {
+    id: 'hold',
+    label: 'Tahan posisi sebentar...',
+    display: 'Hold',
+    hint: 'Tetap lembut. Tidak perlu memaksa napas.',
+  },
+  {
+    id: 'breathe-out',
+    label: 'Hembuskan pelan',
+    display: 'Breathe out',
+    hint: 'Lepaskan tegang sedikit demi sedikit.',
+  },
+];
+
+const REGULATION_SESSION_SECONDS = 30;
+const REGULATION_PHASE_SECONDS = 4;
+
 function getOffset(index, selectedIndex, total) {
   const rawOffset = index - selectedIndex;
   const wrappedOffset =
@@ -385,7 +409,11 @@ export default function App() {
   const [isCharacterTalking, setIsCharacterTalking] = useState(false);
   const [greetingWordCount, setGreetingWordCount] = useState(0);
   const [isWindActive, setIsWindActive] = useState(false);
+  const [isRegulationOpen, setIsRegulationOpen] = useState(false);
+  const [isRegulationRunning, setIsRegulationRunning] = useState(false);
+  const [regulationSeconds, setRegulationSeconds] = useState(0);
   const audioRef = useRef(null);
+  const meditationAudioRef = useRef(null);
   const isAudioMutedRef = useRef(false);
   const guidanceRef = useRef(null);
   const scienceTouchStartX = useRef(null);
@@ -410,6 +438,15 @@ export default function App() {
       : pixelCharacter;
   const selectedScience =
     dailyAffirmation.science[selectedScienceIndex] ?? dailyAffirmation.science[0];
+  const regulationPhase =
+    regulationPhases[
+      Math.floor(regulationSeconds / REGULATION_PHASE_SECONDS) % regulationPhases.length
+    ];
+  const regulationCycle = Math.floor(regulationSeconds / regulationPhases.length / REGULATION_PHASE_SECONDS);
+  const regulationProgress = Math.min(
+    100,
+    Math.round((regulationSeconds / REGULATION_SESSION_SECONDS) * 100),
+  );
 
   const selectMoodByIndex = (nextIndex) => {
     const safeIndex = (nextIndex + moods.length) % moods.length;
@@ -515,6 +552,78 @@ export default function App() {
       return nextValue;
     });
   };
+
+  const stopMeditationAudio = useCallback(() => {
+    const meditationAudio = meditationAudioRef.current;
+
+    if (!meditationAudio) {
+      return;
+    }
+
+    meditationAudio.gain.gain.cancelScheduledValues(meditationAudio.context.currentTime);
+    meditationAudio.gain.gain.setTargetAtTime(0, meditationAudio.context.currentTime, 0.12);
+
+    window.setTimeout(() => {
+      meditationAudio.oscillators.forEach((oscillator) => oscillator.stop());
+      meditationAudio.context.close();
+    }, 360);
+
+    meditationAudioRef.current = null;
+  }, []);
+
+  const startMeditationAudio = useCallback(() => {
+    stopMeditationAudio();
+
+    const AudioContext = window.AudioContext ?? window.webkitAudioContext;
+
+    if (!AudioContext) {
+      return;
+    }
+
+    const context = new AudioContext();
+    const gain = context.createGain();
+    const filter = context.createBiquadFilter();
+    const frequencies = [196, 247, 294];
+    const oscillators = frequencies.map((frequency, index) => {
+      const oscillator = context.createOscillator();
+      const oscillatorGain = context.createGain();
+
+      oscillator.type = index === 1 ? 'triangle' : 'sine';
+      oscillator.frequency.value = frequency;
+      oscillator.detune.value = index * 6;
+      oscillatorGain.gain.value = index === 1 ? 0.16 : 0.11;
+      oscillator.connect(oscillatorGain);
+      oscillatorGain.connect(filter);
+      oscillator.start();
+
+      return oscillator;
+    });
+
+    filter.type = 'lowpass';
+    filter.frequency.value = 760;
+    gain.gain.value = 0;
+    filter.connect(gain);
+    gain.connect(context.destination);
+    gain.gain.setTargetAtTime(0.12, context.currentTime, 0.4);
+    meditationAudioRef.current = { context, gain, oscillators };
+  }, [stopMeditationAudio]);
+
+  const startRegulationSession = () => {
+    audioRef.current?.pause();
+    setIsRegulationOpen(true);
+    setRegulationSeconds(0);
+    setIsRegulationRunning(true);
+    startMeditationAudio();
+  };
+
+  const stopRegulationSession = useCallback(() => {
+    setIsRegulationRunning(false);
+    stopMeditationAudio();
+
+    if (!isAudioMutedRef.current && hasAudioStarted) {
+      window.setTimeout(tryPlayAudio, 0);
+    }
+  }, [hasAudioStarted, stopMeditationAudio, tryPlayAudio]);
 
   const requestAiReflection = async (event) => {
     event.preventDefault();
@@ -679,6 +788,34 @@ export default function App() {
   }, [isScienceOpen]);
 
   useEffect(() => {
+    if (!isRegulationRunning) {
+      return undefined;
+    }
+
+    const timer = window.setInterval(() => {
+      setRegulationSeconds((currentSeconds) => {
+        const nextSeconds = currentSeconds + 1;
+
+        if (nextSeconds >= REGULATION_SESSION_SECONDS) {
+          window.clearInterval(timer);
+          setIsRegulationRunning(false);
+          stopMeditationAudio();
+
+          if (!isAudioMutedRef.current && hasAudioStarted) {
+            window.setTimeout(tryPlayAudio, 0);
+          }
+        }
+
+        return Math.min(nextSeconds, REGULATION_SESSION_SECONDS);
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [hasAudioStarted, isRegulationRunning, stopMeditationAudio, tryPlayAudio]);
+
+  useEffect(() => () => stopMeditationAudio(), [stopMeditationAudio]);
+
+  useEffect(() => {
     const audio = audioRef.current;
 
     if (!audio) {
@@ -811,6 +948,62 @@ export default function App() {
               <strong>{mood.label}</strong>
             </div>
           </div>
+
+          <section
+            className={
+              isRegulationOpen
+                ? `regulation-session is-expanded regulation-phase-${regulationPhase.id}`
+                : 'regulation-session'
+            }
+            style={{ '--session-progress': `${regulationProgress}%` }}
+            aria-labelledby="regulation-session-title"
+          >
+            <div className="regulation-copy">
+              <p className="eyebrow">Latihan regulasi tubuh</p>
+              <h2 id="regulation-session-title">Savoring 30 Detik</h2>
+              <p>
+                Pejamkan mata dan fokuslah sepenuhnya pada sensasi hangat di hatimu
+                selama 30 detik. Sebutkan dalam hati 3 detail kecil dari momen ini.
+              </p>
+            </div>
+
+            {isRegulationOpen ? (
+              <div className="regulation-room">
+                <div className="calm-orb-scene" aria-hidden="true">
+                  <div className="calm-progress-frame" />
+                  <div className="calm-orb">
+                    <span className="calm-eye calm-eye-left" />
+                    <span className="calm-eye calm-eye-right" />
+                    <span className="calm-mouth" />
+                  </div>
+                  <span className="calm-shadow" />
+                  <strong>{regulationPhase.display}</strong>
+                </div>
+
+                <div className="regulation-status">
+                  <span>{regulationPhase.display}</span>
+                  <div>
+                    <strong>
+                      {regulationSeconds >= REGULATION_SESSION_SECONDS
+                        ? 'Selesai. Kamu sudah hadir sebentar.'
+                        : regulationPhase.label}
+                    </strong>
+                    <p>{regulationPhase.hint}</p>
+                    <small>
+                      Durasi: <b>{regulationSeconds}s</b> | Siklus Ke: <b>{regulationCycle}</b>
+                    </small>
+                  </div>
+                  <button onClick={stopRegulationSession} type="button">
+                    Hentikan
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button className="regulation-start-button" onClick={startRegulationSession} type="button">
+                Mulai
+              </button>
+            )}
+          </section>
         </section>
       </main>
     );
