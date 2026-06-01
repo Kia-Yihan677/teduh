@@ -412,6 +412,7 @@ export default function App() {
   const [isRegulationOpen, setIsRegulationOpen] = useState(false);
   const [isRegulationRunning, setIsRegulationRunning] = useState(false);
   const [regulationSeconds, setRegulationSeconds] = useState(0);
+  const [completedRegulationRounds, setCompletedRegulationRounds] = useState(null);
   const audioRef = useRef(null);
   const meditationAudioRef = useRef(null);
   const isAudioMutedRef = useRef(false);
@@ -442,7 +443,9 @@ export default function App() {
     regulationPhases[
       Math.floor(regulationSeconds / REGULATION_PHASE_SECONDS) % regulationPhases.length
     ];
-  const regulationCycle = Math.floor(regulationSeconds / regulationPhases.length / REGULATION_PHASE_SECONDS);
+  const regulationCompletedRounds = Math.floor(
+    regulationSeconds / regulationPhases.length / REGULATION_PHASE_SECONDS,
+  );
   const regulationProgress = Math.min(
     100,
     Math.round((regulationSeconds / REGULATION_SESSION_SECONDS) * 100),
@@ -613,17 +616,27 @@ export default function App() {
     setIsRegulationOpen(true);
     setRegulationSeconds(0);
     setIsRegulationRunning(true);
+    setCompletedRegulationRounds(null);
     startMeditationAudio();
   };
 
   const stopRegulationSession = useCallback(() => {
+    const completedRounds = Math.floor(
+      regulationSeconds / regulationPhases.length / REGULATION_PHASE_SECONDS,
+    );
+
     setIsRegulationRunning(false);
+    setIsRegulationOpen(false);
     stopMeditationAudio();
+
+    if (completedRounds > 0) {
+      setCompletedRegulationRounds(completedRounds);
+    }
 
     if (!isAudioMutedRef.current && hasAudioStarted) {
       window.setTimeout(tryPlayAudio, 0);
     }
-  }, [hasAudioStarted, stopMeditationAudio, tryPlayAudio]);
+  }, [hasAudioStarted, regulationSeconds, stopMeditationAudio, tryPlayAudio]);
 
   const requestAiReflection = async (event) => {
     event.preventDefault();
@@ -786,6 +799,21 @@ export default function App() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isScienceOpen]);
+
+  useEffect(() => {
+    if (completedRegulationRounds === null) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setCompletedRegulationRounds(null);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [completedRegulationRounds]);
 
   useEffect(() => {
     if (!isRegulationRunning) {
@@ -990,7 +1018,8 @@ export default function App() {
                     </strong>
                     <p>{regulationPhase.hint}</p>
                     <small>
-                      Durasi: <b>{regulationSeconds}s</b> | Siklus Ke: <b>{regulationCycle}</b>
+                      Durasi: <b>{regulationSeconds}s</b> | Putaran selesai:{' '}
+                      <b>{regulationCompletedRounds}</b>
                     </small>
                   </div>
                   <button onClick={stopRegulationSession} type="button">
@@ -1004,6 +1033,27 @@ export default function App() {
               </button>
             )}
           </section>
+
+          {completedRegulationRounds !== null && (
+            <div
+              aria-labelledby="regulation-rounds-popup-title"
+              aria-modal="true"
+              className="regulation-completion-overlay"
+              role="dialog"
+            >
+              <div className="regulation-completion-popup">
+                <span aria-hidden="true">✓</span>
+                <p className="eyebrow">Latihan dihentikan</p>
+                <h2 id="regulation-rounds-popup-title">Selamat, kamu telah hadir.</h2>
+                <p>
+                  Kamu menyelesaikan <b>{completedRegulationRounds}</b> putaran dengan sadar.
+                </p>
+                <button onClick={() => setCompletedRegulationRounds(null)} type="button">
+                  Oke
+                </button>
+              </div>
+            </div>
+          )}
         </section>
       </main>
     );
