@@ -972,7 +972,7 @@ export default function App() {
           <div className="concept-selected-panel">
             <span>{mood.emoji}</span>
             <div>
-              <p>Yang terasa paling depan</p>
+              <p>Aku sedang merasa</p>
               <strong>{mood.label}</strong>
             </div>
           </div>
@@ -1054,6 +1054,64 @@ export default function App() {
               </div>
             </div>
           )}
+
+          <section className="concept-pivot-section" aria-labelledby="concept-pivot-title">
+            <div className="concept-pivot-progress" aria-hidden="true">
+              <span><b>01</b> / 07</span>
+              <i />
+            </div>
+
+            <article className="concept-pivot-card">
+              <div className="concept-pivot-meta">
+                <span>Teknik inti</span>
+                <em>Pola bantuan</em>
+              </div>
+
+              <div className="concept-pivot-tool-heading">
+                <h2 id="concept-pivot-title">Pola bantuan yang bisa dipakai berulang</h2>
+              </div>
+
+              <div className="concept-pivot-tools" aria-label="Teknik inti">
+                {tools.map((tool) => (
+                  <article className="concept-pivot-tool" key={tool.title}>
+                    <span>{tool.tag}</span>
+                    <h3>{tool.title}</h3>
+                    <p>{tool.text}</p>
+                  </article>
+                ))}
+              </div>
+
+              <div className="concept-pivot-divider" />
+
+              <div className="concept-pivot-copy">
+                <div>
+                  <span>Dunia kerja</span>
+                  <p>
+                    Skill pentingnya bukan tidak pernah sakit hati, salah bicara,
+                    atau pulang dengan kepala penuh. Skill-nya adalah tidak tinggal
+                    terlalu lama di satu kejadian. Ambil pelajaran, atur ulang
+                    respons, lalu kembali bergerak tanpa menjadikan momen itu
+                    sebagai identitas.
+                  </p>
+                </div>
+                <h2>
+                  Pivot cepat setelah hari yang <span>berat.</span>
+                </h2>
+              </div>
+
+              <div className="concept-pivot-steps" aria-label="Langkah pivot cepat">
+                {pivotSteps.map((step, index) => (
+                  <article className="concept-pivot-step" key={step.title}>
+                    <span>{String(index + 1).padStart(2, '0')}</span>
+                    <h3>{step.title}</h3>
+                    <strong>{step.subtitle}</strong>
+                    <p>{step.text}</p>
+                    <em>{step.prompt}</em>
+                  </article>
+                ))}
+              </div>
+            </article>
+          </section>
         </section>
       </main>
     );
