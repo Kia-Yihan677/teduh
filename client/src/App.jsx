@@ -260,6 +260,94 @@ const sources = [
   },
 ];
 
+const crisisResources = [
+  {
+    title: 'Nyawa dalam bahaya sekarang',
+    contact: '112',
+    detail: 'Nomor darurat nasional Indonesia, gratis dari HP mana pun, untuk situasi yang mengancam nyawa.',
+    href: 'tel:112',
+  },
+  {
+    title: 'Layanan Sehat Jiwa Kemenkes (SEJIWA)',
+    contact: '119 ext. 8',
+    detail: 'Konseling gratis 24 jam oleh tenaga kesehatan jiwa. Bisa telepon atau chat di healing119.id.',
+    href: 'https://www.healing119.id',
+  },
+  {
+    title: 'LISA Suicide Prevention Helpline',
+    contact: 'WhatsApp +62 811-3855-472',
+    detail: 'Dukungan rahasia 24 jam untuk pikiran mengakhiri hidup, self-harm, atau rasa yang terlalu berat untuk ditanggung sendiri.',
+    href: 'https://wa.me/628113855472',
+  },
+];
+
+const crisisKeywords = [
+  'pengen mati',
+  'ingin mati',
+  'pengen menghilang',
+  'gak pengen hidup',
+  'tidak ingin hidup',
+  'bunuh diri',
+  'mengakhiri hidup',
+  'menyakiti diri',
+  'nyakitin diri',
+  'melukai diri',
+  'self harm',
+];
+
+const heavyMoodIds = ['cemas', 'sedih', 'malu', 'marah'];
+
+const MOOD_HISTORY_KEY = 'teduh-mood-history';
+const MOOD_HISTORY_LIMIT = 14;
+
+function getDateKey(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function loadMoodHistory() {
+  try {
+    const raw = window.localStorage.getItem(MOOD_HISTORY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function computeMoodStreak(history) {
+  if (history.length === 0) {
+    return { moodId: null, days: 0 };
+  }
+
+  const sorted = [...history].sort((a, b) => (a.date < b.date ? 1 : -1));
+  const latest = sorted[0];
+  const todayKey = getDateKey(new Date());
+  const yesterdayKey = getDateKey(new Date(Date.now() - 86400000));
+
+  if (latest.date !== todayKey && latest.date !== yesterdayKey) {
+    return { moodId: null, days: 0 };
+  }
+
+  let days = 1;
+  const cursor = new Date(latest.date);
+
+  for (let i = 1; i < sorted.length; i += 1) {
+    cursor.setDate(cursor.getDate() - 1);
+    const expectedKey = getDateKey(cursor);
+
+    if (sorted[i].date === expectedKey && sorted[i].moodId === latest.moodId) {
+      days += 1;
+    } else {
+      break;
+    }
+  }
+
+  return { moodId: latest.moodId, days };
+}
+
 const API_URL = import.meta.env.VITE_API_URL ?? 'http://localhost:3001';
 const BACKGROUND_MUSIC_URL =
   import.meta.env.VITE_BACKGROUND_MUSIC_URL ?? '/BABIMBUM-soundtrack1.mp3';
@@ -413,10 +501,13 @@ export default function App() {
   const [isRegulationRunning, setIsRegulationRunning] = useState(false);
   const [regulationSeconds, setRegulationSeconds] = useState(0);
   const [completedRegulationRounds, setCompletedRegulationRounds] = useState(null);
+  const [isCrisisPanelOpen, setIsCrisisPanelOpen] = useState(false);
+  const [moodHistory, setMoodHistory] = useState([]);
   const audioRef = useRef(null);
   const meditationAudioRef = useRef(null);
   const isAudioMutedRef = useRef(false);
   const guidanceRef = useRef(null);
+  const conceptRevealRef = useRef(null);
   const scienceTouchStartX = useRef(null);
   const isDashboardPage = currentPage === 'home' || currentPage === 'dashboard-copy';
   const selectedIndex = moods.findIndex((item) => item.id === selectedMood);
@@ -450,6 +541,34 @@ export default function App() {
     100,
     Math.round((regulationSeconds / REGULATION_SESSION_SECONDS) * 100),
   );
+  const moodStreak = useMemo(() => computeMoodStreak(moodHistory), [moodHistory]);
+  const streakMood = useMemo(
+    () => moods.find((item) => item.id === moodStreak.moodId),
+    [moodStreak.moodId],
+  );
+  const showMoodStreakNotice =
+    moodStreak.days >= 3 && heavyMoodIds.includes(moodStreak.moodId ?? '');
+  const isCrisisTextDetected = useMemo(() => {
+    const normalized = journalText.toLowerCase();
+    return crisisKeywords.some((keyword) => normalized.includes(keyword));
+  }, [journalText]);
+
+  const openCrisisPanel = () => setIsCrisisPanelOpen(true);
+  const closeCrisisPanel = () => setIsCrisisPanelOpen(false);
+
+  const recordMoodEntry = useCallback((moodId) => {
+    const todayKey = getDateKey(new Date());
+
+    setMoodHistory((currentHistory) => {
+      const withoutToday = currentHistory.filter((entry) => entry.date !== todayKey);
+      const nextHistory = [...withoutToday, { date: todayKey, moodId }]
+        .sort((a, b) => (a.date < b.date ? 1 : -1))
+        .slice(0, MOOD_HISTORY_LIMIT);
+
+      window.localStorage.setItem(MOOD_HISTORY_KEY, JSON.stringify(nextHistory));
+      return nextHistory;
+    });
+  }, []);
 
   const selectMoodByIndex = (nextIndex) => {
     const safeIndex = (nextIndex + moods.length) % moods.length;
@@ -514,8 +633,16 @@ export default function App() {
   };
   const revealGuidance = () => {
     setIsRevealed(true);
+    recordMoodEntry(mood.id);
     window.setTimeout(() => {
       guidanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 420);
+  };
+  const revealConceptGuidance = () => {
+    setIsRevealed(true);
+    recordMoodEntry(mood.id);
+    window.setTimeout(() => {
+      conceptRevealRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }, 420);
   };
   const tryPlayAudio = useCallback(async () => {
@@ -650,6 +777,7 @@ export default function App() {
     setAiError('');
     setAiReflection(null);
     setIsRevealed(true);
+    recordMoodEntry(mood.id);
 
     try {
       const response = await fetch(`${API_URL}/api/ai/reflection`, {
@@ -801,6 +929,31 @@ export default function App() {
   }, [isScienceOpen]);
 
   useEffect(() => {
+    setMoodHistory(loadMoodHistory());
+  }, []);
+
+  useEffect(() => {
+    if (!isCrisisPanelOpen) {
+      return undefined;
+    }
+
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') {
+        setIsCrisisPanelOpen(false);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isCrisisPanelOpen]);
+
+  useEffect(() => {
+    if (isCrisisTextDetected) {
+      setIsCrisisPanelOpen(true);
+    }
+  }, [isCrisisTextDetected]);
+
+  useEffect(() => {
     if (completedRegulationRounds === null) {
       return undefined;
     }
@@ -913,10 +1066,80 @@ export default function App() {
     </>
   );
 
+  const brandMark = <span className="brand-mark">Teduh</span>;
+
+  const helpButton = (
+    <button
+      aria-haspopup="dialog"
+      aria-label="Butuh bantuan segera?"
+      className="help-toggle"
+      onClick={openCrisisPanel}
+      title="Butuh bantuan segera?"
+      type="button"
+    >
+      <span aria-hidden="true">♡</span>
+      <span className="help-toggle-label">Butuh bantuan?</span>
+    </button>
+  );
+
+  const crisisModal = isCrisisPanelOpen ? (
+    <div
+      aria-labelledby="crisis-panel-title"
+      aria-modal="true"
+      className="crisis-modal-backdrop"
+      role="dialog"
+    >
+      <button
+        aria-label="Tutup panel bantuan"
+        className="crisis-modal-scrim"
+        onClick={closeCrisisPanel}
+        type="button"
+      />
+      <section className="crisis-modal">
+        <div className="crisis-modal-header">
+          <div>
+            <p className="eyebrow">Kamu tidak sendirian</p>
+            <h2 id="crisis-panel-title">Bantuan nyata, bukan cuma dari app ini</h2>
+          </div>
+          <button
+            aria-label="Tutup panel bantuan"
+            className="crisis-modal-close"
+            onClick={closeCrisisPanel}
+            type="button"
+          >
+            ×
+          </button>
+        </div>
+        <p className="crisis-modal-intro">
+          Kalau perasaan ini terasa terlalu berat untuk ditanggung sendiri, kamu boleh
+          menghubungi orang atau layanan di bawah ini. Ini bukan tanda kamu gagal.
+        </p>
+        <div className="crisis-resource-list">
+          {crisisResources.map((resource) => (
+            <a
+              className="crisis-resource-card"
+              href={resource.href}
+              key={resource.title}
+              rel="noreferrer"
+              target="_blank"
+            >
+              <strong>{resource.title}</strong>
+              <span>{resource.contact}</span>
+              <p>{resource.detail}</p>
+            </a>
+          ))}
+        </div>
+      </section>
+    </div>
+  ) : null;
+
   if (currentPage === 'dashboard-copy') {
     return (
       <main className="app-shell dashboard-concept-shell">
         {audioControl}
+        {brandMark}
+        {helpButton}
+        {crisisModal}
 
         <button
           aria-label="Kembali ke halaman afirmasi"
@@ -930,8 +1153,8 @@ export default function App() {
 
         <section className="emotion-orbit-concept" aria-labelledby="dashboard-copy-title">
           <div className="concept-title-block">
-            <p className="eyebrow">Dashboard versi baru</p>
-            <h1 id="dashboard-copy-title">apa yg sedang kamu rasakan?</h1>
+            <p className="eyebrow">Kenali dan atur rasamu</p>
+            <h1 id="dashboard-copy-title">Apa yang sedang kamu rasakan?</h1>
           </div>
 
           <div className="concept-orbit-stage" aria-label="Orbit pilihan emosi">
@@ -976,6 +1199,138 @@ export default function App() {
               <strong>{mood.label}</strong>
             </div>
           </div>
+
+          {!isRevealed ? (
+            <button className="concept-feeling-button" onClick={revealConceptGuidance} type="button">
+              Aku sedang merasakan {mood.label.toLowerCase()}
+            </button>
+          ) : null}
+
+          {isRevealed ? (
+            <div className="concept-revealed-guidance" ref={conceptRevealRef}>
+              {showMoodStreakNotice ? (
+                <div className="mood-streak-notice">
+                  <span aria-hidden="true">{streakMood?.emoji}</span>
+                  <div>
+                    <strong>
+                      Sudah {moodStreak.days} hari rasa {streakMood?.label.toLowerCase()} ini
+                      nempel.
+                    </strong>
+                    <p>
+                      Kamu tidak sendirian, dan kamu tidak harus menanggung ini diam-diam.
+                      Coba latihan Pivot di bawah, atau bicara dengan seseorang yang kamu
+                      percaya.
+                    </p>
+                  </div>
+                  <button onClick={openCrisisPanel} type="button">
+                    Lihat bantuan
+                  </button>
+                </div>
+              ) : null}
+
+              <section className="concept-focus-card" aria-label={`Panduan untuk rasa ${mood.label}`}>
+                <div className="concept-focus-header">
+                  <span className="concept-focus-emoji" aria-hidden="true">
+                    {mood.emoji}
+                  </span>
+                  <div>
+                    <p className="eyebrow">Saat ini</p>
+                    <h3>{mood.label}</h3>
+                    <p className="concept-focus-tone">{mood.tone}</p>
+                  </div>
+                </div>
+
+                <div className="concept-focus-grid">
+                  <article className="concept-focus-tile">
+                    <span>Latihan 2 menit</span>
+                    <p>{mood.practice}</p>
+                  </article>
+                  <article className="concept-focus-tile">
+                    <span>Pertanyaan jujur</span>
+                    <p>{mood.prompt}</p>
+                  </article>
+                </div>
+
+                <div className="concept-focus-affirmations">
+                  {mood.affirmation.map((line) => (
+                    <p key={line}>{line}</p>
+                  ))}
+                </div>
+
+                <p className="concept-focus-evidence">
+                  <span aria-hidden="true">🔬</span> {mood.evidence}{' '}
+                  <b>— {mood.source}</b>
+                </p>
+              </section>
+
+              <section className="concept-journal-section" aria-labelledby="concept-journal-title">
+                <div className="concept-journal-header">
+                  <span className="concept-journal-icon" aria-hidden="true">
+                    ✨
+                  </span>
+                  <div>
+                    <p className="eyebrow">AI companion</p>
+                    <h2 id="concept-journal-title">Ceritakan sedikit yang terjadi hari ini</h2>
+                    <p className="concept-journal-lead">
+                      AI akan membaca mood yang kamu pilih dan ceritamu, lalu memberi validasi
+                      emosi, sisi positif, latihan singkat, afirmasi, dan satu langkah kecil.
+                    </p>
+                  </div>
+                </div>
+
+                <form className="concept-journal-form" onSubmit={requestAiReflection}>
+                  <label htmlFor="concept-journal-entry">Catatan hari ini</label>
+                  <textarea
+                    id="concept-journal-entry"
+                    onChange={(event) => setJournalText(event.target.value)}
+                    placeholder="Contoh: hari ini aku malu banget karena..."
+                    rows="6"
+                    value={journalText}
+                  />
+                  {isCrisisTextDetected ? (
+                    <div className="crisis-inline-banner">
+                      <p>
+                        Sepertinya ini berat banget. Kamu tidak sendirian — ada bantuan nyata
+                        yang bisa dihubungi sekarang.
+                      </p>
+                      <button onClick={openCrisisPanel} type="button">
+                        Lihat bantuan
+                      </button>
+                    </div>
+                  ) : null}
+                  {aiError ? <p className="form-error">{aiError}</p> : null}
+                  <button disabled={isAiLoading} type="submit">
+                    {isAiLoading ? 'Menenangkan pikiran...' : 'Minta refleksi AI'}
+                  </button>
+                </form>
+
+                {aiReflection ? (
+                  <div className="concept-ai-result" ref={guidanceRef}>
+                    <h3>{aiReflection.validation}</h3>
+                    <p>{aiReflection.positive_reframe}</p>
+                    <div className="concept-ai-result-grid">
+                      <article>
+                        <span>Latihan sekarang</span>
+                        <p>{aiReflection.practice}</p>
+                      </article>
+                      <article>
+                        <span>Langkah kecil</span>
+                        <p>{aiReflection.small_step}</p>
+                      </article>
+                      <article>
+                        <span>Afirmasi</span>
+                        <p>{aiReflection.affirmation}</p>
+                      </article>
+                      <article>
+                        <span>Journaling lanjut</span>
+                        <p>{aiReflection.journal_prompt}</p>
+                      </article>
+                    </div>
+                  </div>
+                ) : null}
+              </section>
+            </div>
+          ) : null}
 
           <section
             className={
@@ -1110,6 +1465,74 @@ export default function App() {
                   </article>
                 ))}
               </div>
+
+              <div className="concept-work-grid">
+                <article className="concept-reset-card">
+                  <p className="eyebrow">Reset 20 menit</p>
+                  <h3>Batasi replay di kepala</h3>
+                  <p>
+                    Beri otak slot untuk memproses, lalu tutup dengan keputusan kecil.
+                    Kalau pikiran kembali memutar ulang percakapan, ingatkan diri:
+                    "Sudah diproses. Sekarang lanjut."
+                  </p>
+                  <div className="concept-reset-table">
+                    {workSituations.map((item) => (
+                      <div className="concept-reset-row" key={item.event}>
+                        <span>{item.event}</span>
+                        <p>{item.reframe}</p>
+                        <strong>{item.action}</strong>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+
+                <article className="concept-navigation-card">
+                  <p className="eyebrow">Social awareness</p>
+                  <h3>Belajar orang apa adanya</h3>
+                  <ul>
+                    {navigationSignals.map((signal) => (
+                      <li key={signal}>{signal}</li>
+                    ))}
+                  </ul>
+                </article>
+              </div>
+            </article>
+          </section>
+
+          <section className="concept-affirmation-section" aria-labelledby="concept-affirmation-title">
+            <div className="concept-affirmation-heading">
+              <div>
+                <p className="eyebrow">Afirmasi harian</p>
+                <h2 id="concept-affirmation-title">Afirmasi yang bisa kamu ulang hari ini</h2>
+              </div>
+              <div className="concept-condition-buttons" aria-label="Pilihan kondisi afirmasi">
+                {dailyAffirmationConditions.map((condition) => (
+                  <button
+                    className={
+                      condition.id === selectedAffirmationCondition
+                        ? 'concept-condition-button is-active'
+                        : 'concept-condition-button'
+                    }
+                    key={condition.id}
+                    onClick={() => selectAffirmationCondition(condition.id)}
+                    type="button"
+                  >
+                    {condition.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <article className="concept-daily-script-card">
+              <span>Kondisi</span>
+              <h3>{dailyAffirmation.headline}</h3>
+              <p>{dailyAffirmation.note}</p>
+              <div className="concept-daily-script-list">
+                {dailyAffirmation.script.map((line) => (
+                  <strong key={line}>{line}</strong>
+                ))}
+              </div>
+              <em>{dailyAffirmation.repeat}</em>
             </article>
           </section>
         </section>
@@ -1121,6 +1544,9 @@ export default function App() {
     return (
       <main className="app-shell affirmation-page">
         {audioControl}
+        {brandMark}
+        {helpButton}
+        {crisisModal}
 
         <button
           aria-label="Kembali ke halaman perasaan"
@@ -1324,6 +1750,9 @@ export default function App() {
   return (
     <main className={isRevealed ? 'app-shell is-revealed' : 'app-shell'}>
       {audioControl}
+      {brandMark}
+      {helpButton}
+      {crisisModal}
 
       {currentPage === 'home' ? (
         <button
@@ -1454,6 +1883,17 @@ export default function App() {
             rows="7"
             value={journalText}
           />
+          {isCrisisTextDetected ? (
+            <div className="crisis-inline-banner">
+              <p>
+                Sepertinya ini berat banget. Kamu tidak sendirian — ada bantuan nyata
+                yang bisa dihubungi sekarang.
+              </p>
+              <button onClick={openCrisisPanel} type="button">
+                Lihat bantuan
+              </button>
+            </div>
+          ) : null}
           {aiError ? <p className="form-error">{aiError}</p> : null}
           <button disabled={isAiLoading} type="submit">
             {isAiLoading ? 'Menenangkan pikiran...' : 'Minta refleksi AI'}
