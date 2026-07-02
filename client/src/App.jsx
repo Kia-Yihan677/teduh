@@ -1,7 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import pixelCharacter from './assets/pixel-character-idle.webp';
-import pixelCharacterTalking from './assets/pixel-character-talking.webp';
-import pixelCharacterWind from './assets/pixel-character-wind.webp';
 
 const moods = [
   {
@@ -153,12 +150,51 @@ const dailyAffirmationConditions = [
         source: 'Hatzigeorgiadis et al., 2011',
         href: 'https://pubmed.ncbi.nlm.nih.gov/26167788/',
       },
+      {
+        title: 'Kalimatnya harus terasa mungkin, bukan mutlak',
+        text: 'Studi pada orang dengan self-esteem rendah menemukan afirmasi absolut seperti "aku orang yang layak dicintai" justru bisa bikin merasa lebih buruk kalau dipaksa dipercaya penuh. Afirmasi yang diakui masih "sedang diperjuangkan" lebih aman dan sehat.',
+        source: 'Wood, Perunovic & Lee, 2009',
+        href: 'https://pubmed.ncbi.nlm.nih.gov/19493324/',
+      },
+      {
+        title: 'Panggil dirimu pakai nama sendiri',
+        text: 'Self-talk dengan nama sendiri atau kata ganti non-orang-pertama ("Kamu bisa, [nama]" bukan "Aku bisa") terbukti membantu regulasi emosi saat stres sosial, karena menciptakan jarak psikologis dari masalah.',
+        source: 'Kross et al., 2014',
+        href: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4712089/',
+      },
+      {
+        title: 'Afirmasi nilai bisa menurunkan hormon stres',
+        text: 'Partisipan yang menulis afirmasi nilai personal sebelum tantangan stres menunjukkan respons kortisol yang lebih rendah dibanding kelompok kontrol, meski efeknya bergantung pada seberapa kuat self-esteem dan optimisme dasar mereka.',
+        source: 'Creswell et al., 2005',
+        href: 'https://pubmed.ncbi.nlm.nih.gov/16262767/',
+      },
     ],
   },
 ];
 
-const characterGreeting = 'Halo, gimana perasaan mu hari ini?';
-const characterGreetingWords = characterGreeting.split(' ');
+const selfTalkResearch = [
+  {
+    tag: 'Self-affirmation theory',
+    title: 'Bikin realistis, bukan mutlak',
+    text: 'Afirmasi absolut ("aku sempurna") bisa terasa palsu dan malah bikin lebih buruk untuk orang dengan self-esteem rendah. Kalimat yang diakui masih "sedang diperjuangkan" lebih aman dan lebih sehat.',
+    source: 'Wood, Perunovic & Lee, 2009',
+    href: 'https://pubmed.ncbi.nlm.nih.gov/19493324/',
+  },
+  {
+    tag: 'Distanced self-talk',
+    title: 'Panggil dirimu pakai nama sendiri',
+    text: 'Bicara ke diri sendiri pakai nama atau "kamu" (bukan "aku") menciptakan jarak psikologis yang membantu meredakan stres, terutama sebelum situasi yang menegangkan.',
+    source: 'Kross et al., 2014',
+    href: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4712089/',
+  },
+  {
+    tag: 'Stress buffering',
+    title: 'Bisa menurunkan hormon stres',
+    text: 'Menuliskan afirmasi nilai personal sebelum momen menegangkan terbukti menurunkan respons kortisol dibanding kelompok yang tidak melakukannya.',
+    source: 'Creswell et al., 2005',
+    href: 'https://pubmed.ncbi.nlm.nih.gov/16262767/',
+  },
+];
 
 const pivotSteps = [
   {
@@ -237,6 +273,18 @@ const sources = [
   {
     label: 'Dutcher et al., Social Cognitive and Affective Neuroscience, 2020',
     href: 'https://academic.oup.com/scan/article/15/10/1086/5815969',
+  },
+  {
+    label: 'Wood, Perunovic & Lee, Psychological Science, 2009',
+    href: 'https://pubmed.ncbi.nlm.nih.gov/19493324/',
+  },
+  {
+    label: 'Kross et al., Journal of Personality and Social Psychology, 2014',
+    href: 'https://pmc.ncbi.nlm.nih.gov/articles/PMC4712089/',
+  },
+  {
+    label: 'Creswell et al., Psychological Science, 2005',
+    href: 'https://pubmed.ncbi.nlm.nih.gov/16262767/',
   },
   {
     label: 'Fredrickson, American Psychologist, 2001',
@@ -479,7 +527,7 @@ function getConceptOrbitStyle(offset) {
 }
 
 export default function App() {
-  const [currentPage, setCurrentPage] = useState('home');
+  const [currentPage, setCurrentPage] = useState('dashboard-copy');
   const [selectedMood, setSelectedMood] = useState(moods[0].id);
   const [selectedAffirmationCondition, setSelectedAffirmationCondition] = useState(
     dailyAffirmationConditions[0].id,
@@ -493,10 +541,6 @@ export default function App() {
   const [selectedScienceIndex, setSelectedScienceIndex] = useState(0);
   const [isAudioMuted, setIsAudioMuted] = useState(false);
   const [hasAudioStarted, setHasAudioStarted] = useState(false);
-  const [isGreetingVisible, setIsGreetingVisible] = useState(false);
-  const [isCharacterTalking, setIsCharacterTalking] = useState(false);
-  const [greetingWordCount, setGreetingWordCount] = useState(0);
-  const [isWindActive, setIsWindActive] = useState(false);
   const [isRegulationOpen, setIsRegulationOpen] = useState(false);
   const [isRegulationRunning, setIsRegulationRunning] = useState(false);
   const [regulationSeconds, setRegulationSeconds] = useState(0);
@@ -509,7 +553,7 @@ export default function App() {
   const guidanceRef = useRef(null);
   const conceptRevealRef = useRef(null);
   const scienceTouchStartX = useRef(null);
-  const isDashboardPage = currentPage === 'home' || currentPage === 'dashboard-copy';
+  const isDashboardPage = currentPage === 'dashboard-copy';
   const selectedIndex = moods.findIndex((item) => item.id === selectedMood);
   const mood = useMemo(
     () => moods.find((item) => item.id === selectedMood) ?? moods[0],
@@ -522,12 +566,6 @@ export default function App() {
       ) ?? dailyAffirmationConditions[0],
     [selectedAffirmationCondition],
   );
-  const typedGreeting = characterGreetingWords.slice(0, greetingWordCount).join(' ');
-  const characterImage = isCharacterTalking
-    ? pixelCharacterTalking
-    : isWindActive
-      ? pixelCharacterWind
-      : pixelCharacter;
   const selectedScience =
     dailyAffirmation.science[selectedScienceIndex] ?? dailyAffirmation.science[0];
   const regulationPhase =
@@ -570,14 +608,6 @@ export default function App() {
     });
   }, []);
 
-  const selectMoodByIndex = (nextIndex) => {
-    const safeIndex = (nextIndex + moods.length) % moods.length;
-    setSelectedMood(moods[safeIndex].id);
-    setIsRevealed(false);
-  };
-
-  const goPrevious = () => selectMoodByIndex(selectedIndex - 1);
-  const goNext = () => selectMoodByIndex(selectedIndex + 1);
   const selectAffirmationCondition = (conditionId) => {
     setSelectedAffirmationCondition(conditionId);
     setSelectedScienceIndex(0);
@@ -625,18 +655,6 @@ export default function App() {
     setCurrentPage('dashboard-copy');
     setIsScienceOpen(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  const goToHomePage = () => {
-    setCurrentPage('home');
-    setIsScienceOpen(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  };
-  const revealGuidance = () => {
-    setIsRevealed(true);
-    recordMoodEntry(mood.id);
-    window.setTimeout(() => {
-      guidanceRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    }, 420);
   };
   const revealConceptGuidance = () => {
     setIsRevealed(true);
@@ -823,95 +841,6 @@ export default function App() {
 
     return () => window.clearInterval(timer);
   }, [isDashboardPage, isRevealed]);
-
-  useEffect(() => {
-    if (!isDashboardPage) {
-      setIsGreetingVisible(false);
-      setIsCharacterTalking(false);
-      setGreetingWordCount(0);
-      return undefined;
-    }
-
-    const timers = [];
-
-    const showGreeting = () => {
-      setIsGreetingVisible(true);
-      setIsCharacterTalking(true);
-      setGreetingWordCount(1);
-
-      characterGreetingWords.forEach((_, index) => {
-        if (index === 0) {
-          return;
-        }
-
-        timers.push(
-          window.setTimeout(() => {
-            setGreetingWordCount(index + 1);
-          }, 420 * index),
-        );
-      });
-
-      timers.push(
-        window.setTimeout(() => {
-          setIsCharacterTalking(false);
-        }, 420 * (characterGreetingWords.length - 1) + 1100),
-      );
-
-      timers.push(
-        window.setTimeout(() => {
-          setIsGreetingVisible(false);
-          setGreetingWordCount(0);
-        }, 420 * (characterGreetingWords.length - 1) + 2600),
-      );
-    };
-
-    const firstTimer = window.setTimeout(showGreeting, 900);
-    const interval = window.setInterval(showGreeting, 11000);
-
-    return () => {
-      window.clearTimeout(firstTimer);
-      window.clearInterval(interval);
-      timers.forEach((timer) => window.clearTimeout(timer));
-    };
-  }, [isDashboardPage]);
-
-  useEffect(() => {
-    if (!isDashboardPage) {
-      setIsWindActive(false);
-      return undefined;
-    }
-
-    let gustTimer;
-    let calmTimer;
-
-    const scheduleGust = () => {
-      const delay = 14000 + Math.random() * 10000;
-
-      gustTimer = window.setTimeout(() => {
-        setIsWindActive(true);
-
-        calmTimer = window.setTimeout(() => {
-          setIsWindActive(false);
-          scheduleGust();
-        }, 3200);
-      }, delay);
-    };
-
-    const firstGust = window.setTimeout(() => {
-      setIsWindActive(true);
-
-      calmTimer = window.setTimeout(() => {
-        setIsWindActive(false);
-        scheduleGust();
-      }, 3000);
-    }, 6500);
-
-    return () => {
-      window.clearTimeout(firstGust);
-      window.clearTimeout(gustTimer);
-      window.clearTimeout(calmTimer);
-    };
-  }, [isDashboardPage]);
 
   useEffect(() => {
     if (!isScienceOpen) {
@@ -1142,13 +1071,13 @@ export default function App() {
         {crisisModal}
 
         <button
-          aria-label="Kembali ke halaman afirmasi"
-          className="page-nav-button previous-page-button"
+          aria-label="Buka halaman afirmasi"
+          className="page-nav-button next-page-button"
           onClick={goToAffirmationPage}
           title="Afirmasi Hari Ini"
           type="button"
         >
-          ‹
+          ›
         </button>
 
         <section className="emotion-orbit-concept" aria-labelledby="dashboard-copy-title">
@@ -1499,41 +1428,18 @@ export default function App() {
             </article>
           </section>
 
-          <section className="concept-affirmation-section" aria-labelledby="concept-affirmation-title">
-            <div className="concept-affirmation-heading">
-              <div>
-                <p className="eyebrow">Afirmasi harian</p>
-                <h2 id="concept-affirmation-title">Afirmasi yang bisa kamu ulang hari ini</h2>
-              </div>
-              <div className="concept-condition-buttons" aria-label="Pilihan kondisi afirmasi">
-                {dailyAffirmationConditions.map((condition) => (
-                  <button
-                    className={
-                      condition.id === selectedAffirmationCondition
-                        ? 'concept-condition-button is-active'
-                        : 'concept-condition-button'
-                    }
-                    key={condition.id}
-                    onClick={() => selectAffirmationCondition(condition.id)}
-                    type="button"
-                  >
-                    {condition.label}
-                  </button>
-                ))}
-              </div>
+          <section className="concept-affirmation-teaser" aria-labelledby="concept-affirmation-teaser-title">
+            <div>
+              <p className="eyebrow">Halaman lain</p>
+              <h2 id="concept-affirmation-teaser-title">Punya hari susah lihat diri sendiri?</h2>
+              <p>
+                Ada halaman afirmasi terpisah, khusus untuk hari saat nilai dirimu
+                terasa turun karena cermin, komentar, atau perbandingan.
+              </p>
             </div>
-
-            <article className="concept-daily-script-card">
-              <span>Kondisi</span>
-              <h3>{dailyAffirmation.headline}</h3>
-              <p>{dailyAffirmation.note}</p>
-              <div className="concept-daily-script-list">
-                {dailyAffirmation.script.map((line) => (
-                  <strong key={line}>{line}</strong>
-                ))}
-              </div>
-              <em>{dailyAffirmation.repeat}</em>
-            </article>
+            <button onClick={goToAffirmationPage} type="button">
+              Buka Afirmasi Hari Ini
+            </button>
           </section>
         </section>
       </main>
@@ -1551,21 +1457,11 @@ export default function App() {
         <button
           aria-label="Kembali ke halaman perasaan"
           className="page-nav-button previous-page-button"
-          onClick={goToHomePage}
+          onClick={goToDashboardCopyPage}
           title="Kembali"
           type="button"
         >
           ‹
-        </button>
-
-        <button
-          aria-label="Buka dashboard versi baru"
-          className="page-nav-button next-page-button"
-          onClick={goToDashboardCopyPage}
-          title="Dashboard versi baru"
-          type="button"
-        >
-          ›
         </button>
 
         <section className="affirmation-hero" aria-labelledby="affirmation-page-title">
@@ -1609,19 +1505,43 @@ export default function App() {
           </div>
         </section>
 
+        <section className="affirmation-science-section" aria-labelledby="affirmation-science-title">
+          <div>
+            <p className="eyebrow">Kenapa afirmasi bekerja</p>
+            <h2 id="affirmation-science-title">Bukan sekadar kata-kata manis</h2>
+            <p className="lead">
+              Riset psikologi soal self-affirmation dan self-talk sudah berjalan
+              puluhan tahun. Ini beberapa temuan yang membentuk cara Teduh
+              menyusun afirmasinya.
+            </p>
+          </div>
+          <div className="affirmation-science-grid">
+            {selfTalkResearch.map((item) => (
+              <article className="affirmation-science-tile" key={item.source}>
+                <span>{item.tag}</span>
+                <h3>{item.title}</h3>
+                <p>{item.text}</p>
+                <a href={item.href} rel="noreferrer" target="_blank">
+                  {item.source} ↗
+                </a>
+              </article>
+            ))}
+          </div>
+        </section>
+
         <section className="daily-affirmation-section is-page" aria-labelledby="daily-affirmation-title">
           <div className="daily-affirmation-heading">
             <div>
               <p className="eyebrow">Pilihan kondisi</p>
               <h2 id="daily-affirmation-title">Afirmasi yang bisa kamu ulang hari ini</h2>
             </div>
-            <div className="condition-buttons" aria-label="Pilihan kondisi afirmasi">
+            <div className="concept-condition-buttons" aria-label="Pilihan kondisi afirmasi">
               {dailyAffirmationConditions.map((condition) => (
                 <button
                   className={
                     condition.id === selectedAffirmationCondition
-                      ? 'condition-button is-active'
-                      : 'condition-button'
+                      ? 'concept-condition-button is-active'
+                      : 'concept-condition-button'
                   }
                   key={condition.id}
                   onClick={() => selectAffirmationCondition(condition.id)}
@@ -1634,11 +1554,11 @@ export default function App() {
           </div>
 
           <div className="daily-affirmation-layout">
-            <article className="daily-script-card">
+            <article className="concept-daily-script-card">
               <span>Kondisi</span>
               <h3>{dailyAffirmation.headline}</h3>
               <p>{dailyAffirmation.note}</p>
-              <div className="daily-script-list">
+              <div className="concept-daily-script-list">
                 {dailyAffirmation.script.map((line) => (
                   <strong key={line}>{line}</strong>
                 ))}
@@ -1732,8 +1652,8 @@ export default function App() {
           <div>
             {sources
               .filter((source) =>
-                ['Cascio', 'Kim', 'Hatzigeorgiadis', 'Dutcher'].some((name) =>
-                  source.label.includes(name),
+                ['Cascio', 'Kim', 'Hatzigeorgiadis', 'Dutcher', 'Wood', 'Kross', 'Creswell'].some(
+                  (name) => source.label.includes(name),
                 ),
               )
               .map((source) => (
@@ -1747,307 +1667,5 @@ export default function App() {
     );
   }
 
-  return (
-    <main className={isRevealed ? 'app-shell is-revealed' : 'app-shell'}>
-      {audioControl}
-      {brandMark}
-      {helpButton}
-      {crisisModal}
-
-      {currentPage === 'home' ? (
-        <button
-          aria-label="Buka halaman afirmasi"
-          className="page-nav-button next-page-button"
-          onClick={goToAffirmationPage}
-          title="Afirmasi Hari Ini"
-          type="button"
-        >
-          ›
-        </button>
-      ) : (
-        <button
-          aria-label="Kembali ke halaman afirmasi"
-          className="page-nav-button previous-page-button"
-          onClick={goToAffirmationPage}
-          title="Afirmasi Hari Ini"
-          type="button"
-        >
-          ‹
-        </button>
-      )}
-
-      <section className="today-panel" aria-labelledby="dashboard-title">
-        <div className="title-block">
-          <p className="eyebrow">Tumbuh hari ini</p>
-          <h1 id="dashboard-title">Apa yang sedang kamu rasakan?</h1>
-          <p className="lead">
-            Pilih rasa yang paling dekat. Aplikasi ini akan bantu kamu menamai,
-            menenangkan tubuh, lalu memilih satu tindakan kecil yang berpihak
-            pada dirimu.
-          </p>
-        </div>
-
-        <div className="mood-stage" aria-label="Pilihan perasaan">
-          <div className={isWindActive ? 'character-wrap is-windy' : 'character-wrap'}>
-            {isGreetingVisible ? (
-              <p className="character-speech">{typedGreeting}</p>
-            ) : null}
-            <div className="wind-layer" aria-hidden="true">
-              <span className="wind-streak wind-streak-one" />
-              <span className="wind-streak wind-streak-two" />
-              <span className="wind-streak wind-streak-three" />
-              <span className="wind-leaf wind-leaf-one" />
-              <span className="wind-leaf wind-leaf-two" />
-              <span className="wind-leaf wind-leaf-three" />
-              <span className="wind-leaf wind-leaf-four" />
-            </div>
-            <div className="character">
-              <img alt="" className="pixel-character" src={characterImage} />
-            </div>
-          </div>
-
-          <div className="mood-orbit">
-            {moods.map((item, index) => {
-              const offset = getOffset(index, selectedIndex, moods.length);
-
-              return (
-                <button
-                  aria-label={`Pilih perasaan ${item.label}`}
-                  className={item.id === selectedMood ? 'orbit-mood is-active' : 'orbit-mood'}
-                  key={item.id}
-                  onClick={() => {
-                    setSelectedMood(item.id);
-                    setIsRevealed(false);
-                  }}
-                  style={getOrbitStyle(offset)}
-                  type="button"
-                >
-                  <span className="mood-emoji">{item.emoji}</span>
-                  <span>{item.label}</span>
-                </button>
-              );
-            })}
-          </div>
-
-          <div className="stage-controls">
-            <button
-              aria-label="Pilih perasaan sebelumnya"
-              className="arrow-button"
-              onClick={goPrevious}
-              type="button"
-            >
-              ‹
-            </button>
-            <div className="selected-mood">
-              <span>{mood.emoji}</span>
-              <strong>{mood.label}</strong>
-              <small>{mood.need}</small>
-            </div>
-            <button
-              aria-label="Pilih perasaan berikutnya"
-              className="arrow-button"
-              onClick={goNext}
-              type="button"
-            >
-              ›
-            </button>
-          </div>
-
-          <button
-            className="feeling-button"
-            onClick={revealGuidance}
-            type="button"
-          >
-            Aku sedang merasakan {mood.label.toLowerCase()}
-          </button>
-        </div>
-      </section>
-
-      <section className="journal-section" aria-labelledby="journal-title">
-        <div className="journal-copy">
-          <p className="eyebrow">AI companion</p>
-          <h2 id="journal-title">Ceritakan sedikit yang terjadi hari ini</h2>
-          <p>
-            AI akan membaca mood yang kamu pilih dan ceritamu, lalu memberi
-            validasi emosi, sisi positif, latihan singkat, afirmasi, dan satu
-            langkah kecil yang bisa kamu lakukan.
-          </p>
-        </div>
-
-        <form className="journal-form" onSubmit={requestAiReflection}>
-          <label htmlFor="journal-entry">Catatan hari ini</label>
-          <textarea
-            id="journal-entry"
-            onChange={(event) => setJournalText(event.target.value)}
-            placeholder="Contoh: hari ini aku malu jawab pertanyaan salah di depan kelas..."
-            rows="7"
-            value={journalText}
-          />
-          {isCrisisTextDetected ? (
-            <div className="crisis-inline-banner">
-              <p>
-                Sepertinya ini berat banget. Kamu tidak sendirian — ada bantuan nyata
-                yang bisa dihubungi sekarang.
-              </p>
-              <button onClick={openCrisisPanel} type="button">
-                Lihat bantuan
-              </button>
-            </div>
-          ) : null}
-          {aiError ? <p className="form-error">{aiError}</p> : null}
-          <button disabled={isAiLoading} type="submit">
-            {isAiLoading ? 'Menenangkan pikiran...' : 'Minta refleksi AI'}
-          </button>
-        </form>
-      </section>
-
-      <section
-        className="reflection-grid"
-        aria-label={`Panduan untuk rasa ${mood.label}`}
-        ref={guidanceRef}
-      >
-        <article className="focus-card">
-          <div>
-            <p className="eyebrow">Saat ini</p>
-            <h2>{mood.label}</h2>
-            <p className="mood-tone">{mood.tone}</p>
-          </div>
-          <div className="practice-box">
-            <span>Latihan 2 menit</span>
-            <p>{mood.practice}</p>
-          </div>
-          <div className="prompt-line">
-            <span>Pertanyaan jujur</span>
-            <strong>{mood.prompt}</strong>
-          </div>
-        </article>
-
-        <article className="affirmation-card">
-          <p className="eyebrow">Kalimat jangkar</p>
-          <div className="affirmation-list">
-            {mood.affirmation.map((line) => (
-              <p key={line}>{line}</p>
-            ))}
-          </div>
-        </article>
-
-        <article className="science-card">
-          <p className="eyebrow">Dasar ilmiah</p>
-          <p>{mood.evidence}</p>
-          <span>{mood.source}</span>
-        </article>
-      </section>
-
-      {aiReflection ? (
-        <section className="ai-result-section" aria-label="Hasil refleksi AI">
-          <article className="ai-result-main">
-            <p className="eyebrow">Refleksi AI</p>
-            <h2>{aiReflection.validation}</h2>
-            <p>{aiReflection.positive_reframe}</p>
-          </article>
-          <div className="ai-result-grid">
-            <article>
-              <span>Latihan sekarang</span>
-              <p>{aiReflection.practice}</p>
-            </article>
-            <article>
-              <span>Langkah kecil</span>
-              <p>{aiReflection.small_step}</p>
-            </article>
-            <article>
-              <span>Afirmasi</span>
-              <p>{aiReflection.affirmation}</p>
-            </article>
-            <article>
-              <span>Journaling lanjut</span>
-              <p>{aiReflection.journal_prompt}</p>
-            </article>
-          </div>
-        </section>
-      ) : null}
-
-      <section className="tool-section" aria-labelledby="tool-title">
-        <div className="section-heading">
-          <p className="eyebrow">Teknik inti</p>
-          <h2 id="tool-title">Pola bantuan yang bisa dipakai berulang</h2>
-        </div>
-        <div className="tool-grid">
-          {tools.map((tool) => (
-            <article className="tool-card" key={tool.title}>
-              <span>{tool.tag}</span>
-              <h3>{tool.title}</h3>
-              <p>{tool.text}</p>
-            </article>
-          ))}
-        </div>
-      </section>
-
-      <section className="work-pivot-section" aria-labelledby="pivot-title">
-        <div className="pivot-intro">
-          <p className="eyebrow">Dunia kerja</p>
-          <h2 id="pivot-title">Pivot cepat setelah hari yang berat</h2>
-          <p>
-            Skill pentingnya bukan tidak pernah sakit hati, salah bicara, atau
-            pulang dengan kepala penuh. Skill-nya adalah tidak tinggal terlalu
-            lama di satu kejadian. Ambil pelajaran, atur ulang respons, lalu
-            kembali bergerak tanpa menjadikan momen itu sebagai identitas.
-          </p>
-        </div>
-
-        <div className="pivot-flow" aria-label="Langkah Capture Adjust Move">
-          {pivotSteps.map((step, index) => (
-            <article className="pivot-step" key={step.title}>
-              <span>{String(index + 1).padStart(2, '0')}</span>
-              <h3>{step.title}</h3>
-              <strong>{step.subtitle}</strong>
-              <p>{step.text}</p>
-              <em>{step.prompt}</em>
-            </article>
-          ))}
-        </div>
-
-        <div className="work-grid">
-          <article className="reset-card">
-            <p className="eyebrow">Reset 20 menit</p>
-            <h3>Batasi replay di kepala</h3>
-            <p>
-              Beri otak slot untuk memproses, lalu tutup dengan keputusan kecil.
-              Kalau pikiran kembali memutar ulang percakapan, ingatkan diri:
-              "Sudah diproses. Sekarang lanjut."
-            </p>
-            <div className="reset-table">
-              {workSituations.map((item) => (
-                <div className="reset-row" key={item.event}>
-                  <span>{item.event}</span>
-                  <p>{item.reframe}</p>
-                  <strong>{item.action}</strong>
-                </div>
-              ))}
-            </div>
-          </article>
-
-          <article className="navigation-card">
-            <p className="eyebrow">Social awareness</p>
-            <h3>Belajar orang apa adanya</h3>
-            <ul>
-              {navigationSignals.map((signal) => (
-                <li key={signal}>{signal}</li>
-              ))}
-            </ul>
-          </article>
-        </div>
-      </section>
-
-      <section className="sources-strip" aria-label="Referensi ilmiah">
-        <span>Referensi awal</span>
-        <div>
-          {sources.map((source) => (
-            <a href={source.href} key={source.href} rel="noreferrer" target="_blank">
-              {source.label}
-            </a>
-          ))}
-        </div>
-      </section>
-    </main>
-  );
+  return null;
 }
