@@ -1346,82 +1346,70 @@ h3 {
 
 .mirror-face,
 .mirror-person-head {
-  background: #ffdca8;
-  border: 4px solid #17211e;
-  border-radius: 46% 46% 48% 48%;
+  background: linear-gradient(160deg, #dceeff, #ffe3f2);
+  border: 4px solid #19202b;
+  border-radius: 50%;
   display: block;
-  height: 108px;
+  height: 150px;
   position: relative;
-  width: 116px;
+  width: 158px;
 }
 
 .mirror-face {
-  filter: saturate(0.82);
-}
-
-.mirror-body {
-  background: #8fc7ff;
-  border: 4px solid #19202b;
-  border-radius: 32px 32px 22px 22px;
-  display: block;
-  height: 72px;
-  margin-top: -4px;
-  width: 102px;
-}
-
-.mirror-person-body {
-  background: #ffaed6;
-  border: 4px solid #19202b;
-  border-radius: 32px 32px 22px 22px;
-  display: block;
-  height: 72px;
-  margin-top: -4px;
-  width: 102px;
+  filter: saturate(0.85);
 }
 
 .mirror-eye {
   animation: mirror-blink 5s ease-in-out infinite;
   background: #19202b;
   border-radius: 999px;
-  height: 12px;
+  height: 16px;
   position: absolute;
-  top: 43px;
-  width: 12px;
+  top: 62px;
+  width: 16px;
+}
+
+.mirror-eye.left-eye {
+  left: 42px;
+}
+
+.mirror-eye.right-eye {
+  right: 42px;
 }
 
 .mirror-smile {
   border-bottom: 4px solid #19202b;
   border-radius: 0 0 999px 999px;
-  bottom: 30px;
-  height: 18px;
+  bottom: 46px;
+  height: 16px;
   left: 50%;
   position: absolute;
   transform: translateX(-50%);
-  width: 46px;
+  width: 38px;
 }
 
 .mirror-face::after {
   background: #ffb7d4;
   border-radius: 999px;
-  bottom: 22px;
+  bottom: 48px;
   content: "";
-  height: 14px;
-  left: -2px;
-  opacity: 0.85;
+  height: 16px;
+  left: 22px;
+  opacity: 0.75;
   position: absolute;
-  width: 16px;
+  width: 18px;
 }
 
 .mirror-person::before {
   background: #ffb7d4;
   border-radius: 999px;
-  bottom: 22px;
+  bottom: 48px;
   content: "";
-  height: 14px;
-  left: 68px;
-  opacity: 0.85;
+  height: 16px;
+  left: 116px;
+  opacity: 0.75;
   position: absolute;
-  width: 16px;
+  width: 18px;
   z-index: 4;
 }
 
@@ -1429,37 +1417,10 @@ h3 {
   animation: character-breathe 3.2s ease-in-out infinite;
   display: grid;
   justify-items: center;
-  left: 70px;
+  left: 48px;
   position: absolute;
   transform-origin: center bottom;
   z-index: 3;
-}
-
-.mirror-person-head::before,
-.mirror-person-head::after {
-  background: #ffe07a;
-  border: 4px solid #19202b;
-  border-radius: 999px 999px 14px 14px;
-  content: "";
-  height: 38px;
-  position: absolute;
-  top: -22px;
-  width: 50px;
-  z-index: -1;
-}
-
-.mirror-person-head::before {
-  left: 6px;
-  transform: rotate(-16deg);
-}
-
-.mirror-person-head::after {
-  right: 6px;
-  transform: rotate(16deg);
-}
-
-.mirror-person-body {
-  box-shadow: 0 18px 0 rgb(23 33 30 / 11%);
 }
 
 .mirror-heart {
@@ -2239,36 +2200,13 @@ h3 {
 }
 
 @media (max-width: 1080px) {
-  .today-panel {
-    min-height: auto;
-    padding-top: 24px;
-  }
-
-  .today-panel,
-  .affirmation-hero,
-  .reflection-grid,
-  .journal-section {
-    grid-template-columns: 1fr;
-  }
-
-  .mood-stage {
-    min-height: 560px;
-  }
-
   .affirmation-hero {
+    grid-template-columns: 1fr;
     min-height: auto;
   }
 
   .mirror-scene {
     height: 470px;
-  }
-
-  .science-card {
-    min-height: auto;
-  }
-
-  .tool-grid {
-    grid-template-columns: 1fr;
   }
 
   .pivot-intro,
@@ -2415,24 +2353,6 @@ h3 {
     font-size: 0.68rem;
   }
 
-  .today-panel {
-    gap: 22px;
-    padding-bottom: 22px;
-  }
-
-  .app-shell.is-revealed .today-panel {
-    min-height: auto;
-  }
-
-  .mood-stage {
-    min-height: 500px;
-  }
-
-  .character-wrap {
-    height: 260px;
-    width: 260px;
-  }
-
   .mirror-scene {
     height: 420px;
   }
@@ -2444,7 +2364,7 @@ h3 {
   }
 
   .mirror-person {
-    left: 18px;
+    left: 8px;
   }
 
   .mirror-heart {
@@ -2585,15 +2505,6 @@ h3 {
 }
 
 @media (max-width: 420px) {
-  .mood-stage {
-    min-height: 470px;
-  }
-
-  .character-wrap {
-    height: 220px;
-    width: 220px;
-  }
-
   .mirror-scene {
     height: 390px;
   }
@@ -2605,14 +2516,6 @@ h3 {
 
   .mirror-person {
     left: 0;
-  }
-
-  .character {
-    scale: 0.86;
-  }
-
-  .stage-controls {
-    bottom: 64px;
   }
 }
 

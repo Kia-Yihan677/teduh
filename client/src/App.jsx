@@ -1483,7 +1483,6 @@ export default function App() {
                   <span className="mirror-eye right-eye" />
                   <span className="mirror-smile" />
                 </span>
-                <span className="mirror-body" />
               </div>
             </div>
             <div className="mirror-person">
@@ -1492,7 +1491,6 @@ export default function App() {
                 <span className="mirror-eye right-eye" />
                 <span className="mirror-smile" />
               </span>
-              <span className="mirror-person-body" />
             </div>
             <button
               className="science-popup-button mirror-question-button"
