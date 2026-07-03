@@ -2388,42 +2388,7 @@ h3 {
   }
 
   .mirror-question-button::after {
-    left: 50%;
-    right: auto;
-    transform: translateX(-50%) rotate(45deg);
-  }
-
-  .orbit-mood {
-    min-height: 76px;
-    width: 96px;
-  }
-
-  .mood-emoji {
-    font-size: 1.55rem;
-  }
-
-  .orbit-mood span:last-child {
-    font-size: 0.76rem;
-  }
-
-  .stage-controls {
-    bottom: 68px;
-    grid-template-columns: 42px minmax(0, 1fr) 42px;
-    width: min(100%, 300px);
-  }
-
-  .arrow-button {
-    font-size: 1.8rem;
-    height: 42px;
-    width: 42px;
-  }
-
-  .feeling-button {
-    max-width: 300px;
-  }
-
-  .reflection-grid {
-    padding: 18px 0;
+    display: none;
   }
 
   .regulation-session {
