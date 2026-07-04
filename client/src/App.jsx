@@ -70,17 +70,18 @@ const moods = [
     id: 'marah',
     label: 'Marah',
     emoji: '😠',
-    tone: 'Ada batas yang terasa dilanggar',
-    need: 'Batas yang jelas',
-    practice: 'Tunda respons 90 detik. Catat: "Aku marah karena ...", lalu ubah menjadi permintaan yang spesifik.',
-    prompt: 'Batas apa yang perlu dijaga tanpa menyakiti dirimu sendiri?',
+    tone: 'Ada batas yang terasa dilanggar, tubuh siap melawan',
+    need: 'Diakui, lalu didengar',
+    practice: 'Sapa dulu amarahmu: "wajar aku merasa ini." Ia sinyal, bukan perintah untuk langsung bereaksi.',
+    prompt: 'Kalau amarah ini boleh bicara, apa sebenarnya yang ia minta darimu — diakui, jarak, atau perubahan nyata?',
+    script: 'Aku merasa [marah/kecewa] karena [apa yang terjadi]. Aku butuh [permintaan konkret].',
     affirmation: [
-      'Amarahku memberi sinyal, bukan perintah.',
-      'Aku bisa tegas tanpa kehilangan kendali.',
+      'Amarahku bukan musuh. Ia sinyal tentang apa yang aku butuhkan.',
+      'Aku boleh marah dan tetap memilih responsku sendiri.',
       'Aku berhak punya batas yang sehat.',
     ],
-    evidence: 'Memberi nama emosi dan melakukan reappraisal melibatkan area prefrontal yang membantu regulasi respons emosional.',
-    source: 'Torre & Lieberman, 2018',
+    evidence: 'Memberi nama emosi dan melakukan reappraisal melibatkan area prefrontal yang membantu regulasi respons emosional. Pendekatan klinis juga menekankan amarah sebagai sinyal kebutuhan yang sehat, bukan emosi yang harus dihilangkan.',
+    source: 'Torre & Lieberman, 2018; pendekatan klinis Dr. Becky Kennedy, Good Inside',
   },
   {
     id: 'bahagia',
@@ -115,6 +116,16 @@ const tools = [
     title: 'Compassionate reframe',
     tag: 'Self-compassion',
     text: 'Ganti nada menghukum dengan nada pelatih yang sayang: tetap jujur soal kesalahan, tapi tidak menjadikan diri sebagai musuh.',
+  },
+  {
+    title: 'AVP: Acknowledge, Validate, Permit',
+    tag: 'Emotion regulation',
+    text: 'Sapa dulu perasaannya ("halo, ada rasa ini"), akui kenapa itu masuk akal, lalu izinkan dirimu merasakannya tanpa harus langsung bertindak. Validasi bukan berarti setuju, cuma mengakui perasaan itu nyata.',
+  },
+  {
+    title: 'Dua hal bisa sama-sama benar',
+    tag: 'Perspective-taking',
+    text: 'Perasaanmu valid. Sudut pandang orang lain juga valid. Kamu tidak perlu memilih siapa yang "benar" secara emosi untuk bisa menyelesaikan masalah dengan lebih tenang. Coba tanya: apa yang aku rasakan, dan apa yang mungkin dirasakan orang itu?',
   },
 ];
 
@@ -1179,6 +1190,16 @@ export default function App() {
                     <p>{mood.prompt}</p>
                   </article>
                 </div>
+
+                {mood.script ? (
+                  <div className="concept-focus-script">
+                    <span aria-hidden="true">&ldquo;</span>
+                    <div>
+                      <span className="concept-focus-script-label">Contoh kalimat</span>
+                      <p>{mood.script}</p>
+                    </div>
+                  </div>
+                ) : null}
 
                 <div className="concept-focus-affirmations">
                   {mood.affirmation.map((line) => (
