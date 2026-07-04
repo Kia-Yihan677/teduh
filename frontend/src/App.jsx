@@ -14,8 +14,8 @@ const moods = [
       'Aku tidak perlu menyelesaikan semuanya sekaligus.',
       'Aku boleh bergerak pelan dan tetap bertumbuh.',
     ],
-    evidence: 'Slow breathing dapat memengaruhi sistem saraf otonom, termasuk heart rate variability dan keseimbangan simpatis-parasimpatis.',
-    source: 'Russo et al., 2017',
+    evidence: 'Slow breathing dapat memengaruhi sistem saraf otonom, termasuk heart rate variability dan keseimbangan simpatis-parasimpatis. Merasakan cemas juga bukan tanda ada yang salah denganmu — itu sinyal bahwa sistemmu bekerja normal, bukan sesuatu yang harus dihilangkan sepenuhnya.',
+    source: 'Russo et al., 2017; kerangka anti-fragility, Tal Ben-Shahar',
   },
   {
     id: 'sedih',
@@ -30,8 +30,8 @@ const moods = [
       'Perasaanku valid, tapi ia bukan seluruh diriku.',
       'Aku tetap layak disayangi saat sedang rapuh.',
     ],
-    evidence: 'Affect labeling dikaitkan dengan peningkatan aktivitas ventrolateral prefrontal cortex dan penurunan respons amygdala.',
-    source: 'Lieberman et al., 2007',
+    evidence: 'Affect labeling dikaitkan dengan peningkatan aktivitas ventrolateral prefrontal cortex dan penurunan respons amygdala. Menolak atau memendam emosi menyakitkan justru membuatnya makin kuat — menerimanya adalah bagian dari cara kerja emosi yang sehat.',
+    source: 'Lieberman et al., 2007; kerangka anti-fragility, Tal Ben-Shahar',
   },
   {
     id: 'malu',
@@ -127,6 +127,11 @@ const tools = [
     tag: 'Perspective-taking',
     text: 'Perasaanmu valid. Sudut pandang orang lain juga valid. Kamu tidak perlu memilih siapa yang "benar" secara emosi untuk bisa menyelesaikan masalah dengan lebih tenang. Coba tanya: apa yang aku rasakan, dan apa yang mungkin dirasakan orang itu?',
   },
+  {
+    title: 'Latihan syukur',
+    tag: 'Gratitude practice',
+    text: 'Sebelum menutup hari, sebutkan 3-5 hal kecil yang kamu syukuri hari ini. Boleh topiknya berulang tiap hari — itu tandanya hal itu memang berarti buatmu. Latihan sederhana ini terbukti meningkatkan rasa optimis dan kesehatan secara keseluruhan.',
+  },
 ];
 
 const dailyAffirmationConditions = [
@@ -217,7 +222,7 @@ const pivotSteps = [
   {
     title: 'Adjust',
     subtitle: 'Pilih perbaikan kecil',
-    text: 'Ubah pelajaran menjadi satu tindakan yang bisa dilakukan di meeting, chat, atau pekerjaan berikutnya.',
+    text: 'Ubah pelajaran menjadi satu tindakan yang bisa dilakukan di percakapan, chat, atau interaksi berikutnya.',
     prompt: 'Satu hal apa yang akan kubuat lebih jelas besok?',
   },
   {
@@ -230,14 +235,14 @@ const pivotSteps = [
 
 const workSituations = [
   {
-    event: 'Meeting terasa buruk',
-    reframe: 'Satu meeting bukan identitas profesionalmu.',
-    action: 'Catat 3 poin utama untuk follow-up.',
+    event: 'Obrolan penting terasa buruk',
+    reframe: 'Satu momen buruk bukan identitas dirimu.',
+    action: 'Catat 3 poin utama untuk ditindaklanjuti.',
   },
   {
-    event: 'Kritik dari atasan',
+    event: 'Kritik dari orang lain',
     reframe: 'Kritik adalah data, bukan vonis nilai diri.',
-    action: 'Minta contoh output yang dianggap jelas.',
+    action: 'Minta contoh konkret dari apa yang dimaksud.',
   },
   {
     event: 'Kepikiran omongan orang',
@@ -249,7 +254,7 @@ const workSituations = [
 const navigationSignals = [
   'Ada orang yang direct, defensif, suportif, atau suka melempar tanggung jawab.',
   'Tugasmu bukan membuat semua orang menyenangkan, tapi membaca pola dan menyesuaikan cara komunikasi.',
-  'Adaptasi profesional bukan berarti palsu. Itu cara menjaga energi sambil tetap bergerak.',
+  'Adaptasi sosial bukan berarti palsu. Itu cara menjaga energi sambil tetap bergerak.',
 ];
 
 const sources = [
@@ -1093,7 +1098,7 @@ export default function App() {
 
         <section className="emotion-orbit-concept" aria-labelledby="dashboard-copy-title">
           <div className="concept-title-block">
-            <p className="eyebrow">Kenali dan atur rasamu</p>
+            <p className="eyebrow">Kenali dan atur perasaanmu</p>
             <h1 id="dashboard-copy-title">Apa yang sedang kamu rasakan?</h1>
           </div>
 
@@ -1385,12 +1390,16 @@ export default function App() {
                   </article>
                 ))}
               </div>
+            </article>
 
-              <div className="concept-pivot-divider" />
+            <article className="concept-pivot-card">
+              <div className="concept-pivot-meta">
+                <span>Latihan lanjutan</span>
+                <em>Pivot cepat</em>
+              </div>
 
               <div className="concept-pivot-copy">
                 <div>
-                  <span>Dunia kerja</span>
                   <p>
                     Skill pentingnya bukan tidak pernah sakit hati, salah bicara,
                     atau pulang dengan kepala penuh. Skill-nya adalah tidak tinggal

@@ -65,7 +65,7 @@ router.post('/reflection', async (req, res) => {
 
   if (!process.env.OPENAI_API_KEY) {
     return res.status(500).json({
-      error: 'OPENAI_API_KEY belum tersedia di server/.env.',
+      error: 'OPENAI_API_KEY belum tersedia di backend/.env.',
     });
   }
 
